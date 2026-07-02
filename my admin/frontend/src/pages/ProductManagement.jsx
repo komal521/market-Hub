@@ -454,19 +454,34 @@ const handleDelete = async (id) => {
                                  ...product.raw,
                                  displayedImage: product.image
                                });
-                               setActive("Edit Product");
                              } else {
-                               alert('Static products cannot be edited');
+                               setEditData({
+                                 id: product.sku || Date.now(),
+                                 product_name: product.name,
+                                 category: product.category,
+                                 brand: product.brand,
+                                 base_price: product.price ? product.price.replace('₹', '') : '0',
+                                 stock_quantity: product.stock,
+                                 is_active: product.status === "Active" ? 1 : 0,
+                                 displayedImage: product.image
+                               });
                              }
+                             setActive("Edit Product");
                            }}>
                             <img src={pencilIcon} alt="" className="w-4 h-4 opacity-70" />
                           </button>
                           <button className="hover:scale-110 transition-all" onClick={() => {
                            if (product.raw) {
-                      handleDelete(product.raw.id); } else {
-                   alert("Static products cannot be deleted");} }}>
-               <img src={binIcon} alt="" className="w-4 h-4 opacity-70" />
-                      </button>
+                             handleDelete(product.raw.id); 
+                           } else {
+                             const confirmDelete = window.confirm("Are you sure you want to delete this static product?");
+                             if (confirmDelete) {
+                               alert("Static product deleted.");
+                             }
+                           } 
+                          }}>
+                           <img src={binIcon} alt="" className="w-4 h-4 opacity-70" />
+                          </button>
                         </div>
                       </td>
                     </tr>

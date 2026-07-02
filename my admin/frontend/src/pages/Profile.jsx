@@ -13,7 +13,7 @@ import clockIcon from "../assets/clock.png";
 import rightArrow from "../assets/right-arrow.png";
 import verifiedIcon from "../assets/verified.png";
 import showIcon from "../assets/show.png";
-const Profile = ({ darkMode }) => {
+const Profile = ({ darkMode, setActive }) => {
   const [adminUser, setAdminUser] = useState(null);
   const [adminSettings, setAdminSettings] = useState({});
   const [activities, setActivities] = useState([]);
@@ -46,8 +46,9 @@ const Profile = ({ darkMode }) => {
   const name = adminSettings.fullName || (adminUser ? adminUser.fullName : "Admin");
   const email = adminSettings.email || (adminUser ? adminUser.email : "admin@example.com");
   const phone = adminSettings.phone || (adminUser ? adminUser.phone : "N/A");
-  const dob = adminUser ? new Date(adminUser.dob).toLocaleDateString() : "N/A";
+  const dob = adminUser && adminUser.dob ? new Date(adminUser.dob).toLocaleDateString() : "N/A";
   const gender = adminUser ? adminUser.gender : "N/A";
+  const address = adminUser && adminUser.address ? adminUser.address : "22nd Floor, Zodiac Tower, Geneva";
   const image = adminUser && adminUser.profileImage ? `http://localhost:5000/uploads/${adminUser.profileImage}` : profileImg;
 
   return (
@@ -75,12 +76,12 @@ const Profile = ({ darkMode }) => {
               </div>
               <div className="flex items-center gap-2">
                 <img src={locationIcon} alt="" className="w-4 h-4" />
-                <span>Geneva, Switzerland</span>
+                <span>{address}</span>
               </div>
             </div>
           </div>
         </div>
-        <button className="flex items-center justify-center gap-3 bg-[#6f4e37] text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300">
+        <button onClick={() => setActive("Edit Profile")} className="flex items-center justify-center gap-3 bg-[#6f4e37] text-white px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300">
           <img src={pencilIcon} alt="" className="w-4 h-4 brightness-0 invert" />
           <span className="font-semibold text-sm">Edit Profile</span>
         </button>
@@ -165,9 +166,7 @@ const Profile = ({ darkMode }) => {
                     Office Address
                   </p>
                   <h3 className="font-semibold mt-1">
-                    22nd Floor, Zodiac Tower,
-                    <br />
-                    Geneva
+                    {address}
                   </h3>
                 </div>
               </div>

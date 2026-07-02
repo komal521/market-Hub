@@ -13,7 +13,6 @@ import databaseIcon from "../assets/database.png";
 import laptopIcon from "../assets/laptop.png";
 import phoneCallIcon from "../assets/smartphone-call (1).png";
 import downIcon from "../assets/down.png";
-
 const ToggleSwitch = ({ checked, onChange }) => (
   <button type="button" onClick={() => onChange(!checked)}
     aria-pressed={checked}
@@ -25,7 +24,6 @@ const ToggleSwitch = ({ checked, onChange }) => (
       }`}  />
   </button>
 );
-
 const IconBox = ({ icon, darkMode }) => (
   <div
     className={`h-8 w-8 shrink-0 rounded-lg flex items-center justify-center ${
@@ -123,7 +121,6 @@ const Settings = ({ darkMode }) => {
       setSaving(false);
     }
   };
-
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     setPasswordMsg("");
@@ -156,7 +153,6 @@ const Settings = ({ darkMode }) => {
       setPasswordMsg("❌ Error updating password");
     }
   };
-
   const handleSignOutOthers = async () => {
     if (!window.confirm("Sign out all other devices?")) return;
     try {
@@ -173,7 +169,6 @@ const Settings = ({ darkMode }) => {
       setSignOutMsg("❌ Failed to sign out other devices");
     }
   };
-
   const handleSignOut = async () => {
     try {
       const browser = detectBrowser();
@@ -190,7 +185,6 @@ const Settings = ({ darkMode }) => {
     alert("Signed out successfully!");
     window.location.href = "http://localhost:5173/login";
   };
-
   const handleSettingsChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
@@ -307,6 +301,40 @@ const Settings = ({ darkMode }) => {
           </section>
           <section className={`rounded-xl p-5 shadow-sm ${cardClass}`}>
             <div className="mb-5 flex items-start gap-3">
+              <IconBox icon={databaseIcon} darkMode={darkMode} />
+              <div>
+                <h2 className="text-base font-semibold">Website Statistics Controls</h2>
+                <p className={`text-xs ${mutedText}`}>Manage dynamic counters shown on the Services page.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-xs font-semibold">Bookings Count</label>
+                <div className={`flex h-10 items-center rounded-lg px-3 ${fieldClass}`}>
+                  <input className="w-full bg-transparent text-sm outline-none" placeholder="15K+" value={settings.bookings_count || ""} onChange={e => handleSettingsChange("bookings_count", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold">Average Rating</label>
+                <div className={`flex h-10 items-center rounded-lg px-3 ${fieldClass}`}>
+                  <input className="w-full bg-transparent text-sm outline-none" placeholder="4.9/5" value={settings.average_rating || ""} onChange={e => handleSettingsChange("average_rating", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-semibold">Services Count</label>
+                <div className={`flex h-10 items-center rounded-lg px-3 ${fieldClass}`}>
+                  <input className="w-full bg-transparent text-sm outline-none" placeholder="50+" value={settings.services_count || ""} onChange={e => handleSettingsChange("services_count", e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-3">
+              <button onClick={handleSave} disabled={saving} className="h-9 rounded-lg bg-[#6f4e37] px-5 text-xs font-semibold text-black disabled:opacity-60">
+                {saving ? "Saving..." : "Save Statistics"}
+              </button>
+            </div>
+          </section>
+          <section className={`rounded-xl p-5 shadow-sm ${cardClass}`}>
+            <div className="mb-5 flex items-start gap-3">
               <img src={verifiedIcon} alt="" className="mt-0.5 h-5 w-5" />
               <div>
                 <h2 className="text-base font-semibold">Security &amp; Authentication</h2>
@@ -326,7 +354,6 @@ const Settings = ({ darkMode }) => {
                 <ToggleSwitch checked={twoFactorEnabled} onChange={setTwoFactorEnabled} />
               </div>
             </div>
-
             <div className={`flex flex-col gap-3 border-b py-4 sm:flex-row sm:items-center sm:justify-between ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
               <div className="flex items-center gap-3">
                 <IconBox icon={verifiedIcon} darkMode={darkMode} />
@@ -432,8 +459,7 @@ const Settings = ({ darkMode }) => {
                   value={passwordForm.currentPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                   className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#6f4e37] ${darkMode ? "bg-[#111827] border-gray-700 text-white" : "border-gray-200"}`}
-                  placeholder="Enter current password"
-                />
+                  placeholder="Enter current password" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">New Password</label>
@@ -443,8 +469,7 @@ const Settings = ({ darkMode }) => {
                   value={passwordForm.newPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                   className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#6f4e37] ${darkMode ? "bg-[#111827] border-gray-700 text-white" : "border-gray-200"}`}
-                  placeholder="Enter new password (min 6 chars)"
-                />
+                  placeholder="Enter new password (min 6 chars)"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Confirm New Password</label>
@@ -454,8 +479,7 @@ const Settings = ({ darkMode }) => {
                   value={passwordForm.confirmPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                   className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#6f4e37] ${darkMode ? "bg-[#111827] border-gray-700 text-white" : "border-gray-200"}`}
-                  placeholder="Re-enter new password"
-                />
+                  placeholder="Re-enter new password" />
               </div>
               {passwordMsg && (
                 <p className={`text-sm font-medium ${passwordMsg.startsWith("✅") ? "text-green-600" : "text-red-500"}`}>{passwordMsg}</p>

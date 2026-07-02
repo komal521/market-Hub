@@ -3,7 +3,6 @@ const router = express.Router();
 const pool = require("../db");
 const multer = require("multer");
 const path = require("path");
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../../../backend/uploads/"));
@@ -13,7 +12,6 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
-
 const ensureProductsTable = async () => {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS products (
@@ -90,7 +88,6 @@ router.post("/create-product", async (req, res) => {
       metaDescription,
       images,
     } = req.body;
-
     if (!productName || !sku || !brand || !category || !basePrice) {
       return res.status(400).json({
         success: false,
@@ -192,63 +189,79 @@ router.put("/:id", upload.single("image"), async (req, res) => {
       variants,
       tags,
     } = req.body;
-
-    let imageField = "";
-    if (req.file) {
-      imageField = req.file.filename;
+    const [existingProductRows] = await pool.execute("SELECT * FROM products WHERE id = ?", [id]);
+    if (existingProductRows.length === 0) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
-
+    const existing = existingProductRows[0];
+    const finalProductName = productName !== undefined ? productName : (req.body.product_name !== undefined ? req.body.product_name : existing.product_name);
+    const finalDescription = description !== undefined ? description : existing.description;
+    const finalSku = sku !== undefined ? sku : existing.sku;
+    const finalBrand = brand !== undefined ? brand : existing.brand;
+    const finalCategory = category !== undefined ? category : existing.category;
+    const finalSubCategory = subCategory !== undefined ? subCategory : existing.sub_category;
+    const finalBasePrice = basePrice !== undefined ? Number(basePrice) : (req.body.base_price !== undefined ? Number(req.body.base_price) : existing.base_price);
+    const finalDiscountPrice = discountPrice !== undefined ? Number(discountPrice) : existing.discount_price;
+    const finalStockQuantity = stockQuantity !== undefined ? Number(stockQuantity) : existing.stock_quantity;
+    const finalIsActive = isActive !== undefined ? Number(isActive) : (req.body.is_active !== undefined ? Number(req.body.is_active) : existing.is_active);
+    const finalIsFeatured = isFeatured !== undefined ? Number(isFeatured) : existing.is_featured;
+    const finalWeight = weight !== undefined ? Number(weight) : existing.weight;
+    const finalLength = length !== undefined ? Number(length) : existing.length;
+    const finalWidth = width !== undefined ? Number(width) : existing.width;
+    const finalHeight = height !== undefined ? Number(height) : existing.height;
+    const finalBaseColor = baseColor !== undefined ? baseColor : existing.base_color;
+    const finalVariants = variants !== undefined ? variants : existing.variants;
+    const finalTags = tags !== undefined ? tags : existing.tags;
     let query;
     let params;
     if (req.file) {
       query = `UPDATE products SET product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?, base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?, weight=?, length=?, width=?, height=?, base_color=?, variants=?, tags=?, images=? WHERE id=?`;
       params = [
-        productName,
-        description || "",
-        sku,
-        brand,
-        category,
-        subCategory || "",
-        Number(basePrice || 0),
-        Number(discountPrice || 0),
-        Number(stockQuantity || 0),
-        isActive !== undefined ? Number(isActive) : 1,
-        isFeatured !== undefined ? Number(isFeatured) : 0,
-        Number(weight || 0),
-        Number(length || 0),
-        Number(width || 0),
-        Number(height || 0),
-        baseColor || "",
-        variants || "[]",
-        tags || "[]",
+        finalProductName,
+        finalDescription,
+        finalSku,
+        finalBrand,
+        finalCategory,
+        finalSubCategory,
+        finalBasePrice,
+        finalDiscountPrice,
+        finalStockQuantity,
+        finalIsActive,
+        finalIsFeatured,
+        finalWeight,
+        finalLength,
+        finalWidth,
+        finalHeight,
+        finalBaseColor,
+        finalVariants,
+        finalTags,
         JSON.stringify([imageField]),
         id,
       ];
     } else {
       query = `UPDATE products SET product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?, base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?, weight=?, length=?, width=?, height=?, base_color=?, variants=?, tags=? WHERE id=?`;
       params = [
-        productName,
-        description || "",
-        sku,
-        brand,
-        category,
-        subCategory || "",
-        Number(basePrice || 0),
-        Number(discountPrice || 0),
-        Number(stockQuantity || 0),
-        isActive !== undefined ? Number(isActive) : 1,
-        isFeatured !== undefined ? Number(isFeatured) : 0,
-        Number(weight || 0),
-        Number(length || 0),
-        Number(width || 0),
-        Number(height || 0),
-        baseColor || "",
-        variants || "[]",
-        tags || "[]",
+        finalProductName,
+        finalDescription,
+        finalSku,
+        finalBrand,
+        finalCategory,
+        finalSubCategory,
+        finalBasePrice,
+        finalDiscountPrice,
+        finalStockQuantity,
+        finalIsActive,
+        finalIsFeatured,
+        finalWeight,
+        finalLength,
+        finalWidth,
+        finalHeight,
+        finalBaseColor,
+        finalVariants,
+        finalTags,
         id,
       ];
     }
-
     await pool.execute(query, params);
     res.json({ success: true, message: "Product updated successfully" });
   } catch (error) {
@@ -268,14 +281,12 @@ router.delete("/:id", async (req, res) => {
       "DELETE FROM products WHERE id = ?",
       [id]
     );
-
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
-
     res.json({
       success: true,
       message: "Product deleted successfully",

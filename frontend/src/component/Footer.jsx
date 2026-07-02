@@ -55,7 +55,7 @@ const Footer = () => {
            <h3 className="text-xl font-semibold mb-5 text-black">
               Quick Links  </h3>
            <ul className="space-y-3 text-gray-200">
-              <li onClick={() => navigate("/product")}
+              <li onClick={() => navigate("/services")}
                className="hover:text-[#e9e2dd] cursor-pointer">
                 Products</li>
               <li onClick={() => navigate("/categories")}

@@ -21,6 +21,11 @@ import Footer from "../component/Footer";
 const Services = () => {
   const navigate = useNavigate();
 const [services, setServices] = useState([]);
+const [settings, setSettings] = useState({
+  bookings_count: "15K+",
+  average_rating: "4.9/5",
+  services_count: "50+"
+});
 const [wishlistedIds, setWishlistedIds] = useState(() => {
   const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
   const ids = {};
@@ -33,10 +38,21 @@ useEffect(() => {
   fetch("http://localhost:5000/api/products")
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
-
       if (data.success) {
         setServices(data.products);
+      }
+    })
+    .catch((err) => console.log(err));
+
+  fetch("http://localhost:5000/api/settings")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success && data.settings) {
+        setSettings({
+          bookings_count: data.settings.bookings_count || "15K+",
+          average_rating: data.settings.average_rating || "4.9/5",
+          services_count: data.settings.services_count || "50+"
+        });
       }
     })
     .catch((err) => console.log(err));
@@ -104,21 +120,21 @@ const handleWishlist = (e, item) => {
           </div>
           <div className="grid grid-cols-3 gap-5 max-w-lg mx-auto mt-10 text-center">
             <div>
-              <h3 className="font-bold text-xl dark:text-white">15K+</h3>
+              <h3 className="font-bold text-xl dark:text-white">{settings.bookings_count}</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">Bookings</p>
             </div>
             <div>
-              <h3 className="font-bold text-xl dark:text-white">4.9/5</h3>
+              <h3 className="font-bold text-xl dark:text-white">{settings.average_rating}</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">Ratings</p>
             </div>
             <div>
-              <h3 className="font-bold text-xl dark:text-white">50+</h3>
+              <h3 className="font-bold text-xl dark:text-white">{settings.services_count}</h3>
               <p className="text-gray-500 dark:text-gray-400 text-sm">Services</p>
             </div>
           </div>
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           {services.map((item, index) => (
-  <div  key={index}  onClick={() => navigate("/product")}
+  <div  key={index}  onClick={() => navigate("/product?id=" + item.id)}
     className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col" >
 <div className="relative">
   <img  src={item.image ? `http://localhost:5000/uploads/${item.image}` : b1}
@@ -154,12 +170,16 @@ const handleWishlist = (e, item) => {
           <span className="text-gray-400 dark:text-gray-500 text-xs italic">not rating yet</span>
         </div>
       )}
+      <p className="text-[10px] tracking-wider text-gray-500 uppercase mb-1">
+        {item.category || "Product"} {item.brand ? `• ${item.brand}` : ""}
+      </p>
       <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate">
         {item.product_name}
       </h3>
+      {item.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
       {item.variants && (() => {
         try {
-          const parsed = JSON.parse(item.variants);
+          const parsed = typeof item.variants === 'string' ? JSON.parse(item.variants) : item.variants;
           if (Array.isArray(parsed) && parsed.length > 0) {
             return (
               <div className="mt-2 flex gap-1 flex-wrap max-h-12 overflow-hidden">

@@ -18,8 +18,7 @@ import a3 from "../assets/a3.jpeg";
 import arrowIcon from "../assets/arrow.png";
 const InputIcon = ({ icon }) => (
   <img src={icon} alt=""
-    className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-65" />
-);
+    className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-65" />);
 const defaultFieldClass =
   "bg-white border-[#e7e2da] text-gray-700 placeholder:text-gray-400";
 const defaultLabelClass = "text-[#23417d]";
@@ -201,7 +200,7 @@ const AddProduct = ({ darkMode, onBack, product }) => {
             <div className="pt-2">
               <SectionHeader icon={camraIcon} title="Media & Gallery" />
               <label className={`mb-2 block text-sm font-semibold ${labelClass}`}>
-                Product Images
+                Product Image (Primary)
               </label>
               <label
                 className={`flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-[24px] border-2 border-dashed px-4 text-center transition-all ${
@@ -210,28 +209,28 @@ const AddProduct = ({ darkMode, onBack, product }) => {
                     : "border-gray-200 bg-[#fcfcfc] hover:border-[#d4af37]"
                 }`} >
                 <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} className="hidden" />
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff7db]">
-                  <img src={camraIcon} alt="" className="h-7 w-7" />
-                </div>
-                <h3 className={darkMode ? "font-bold text-white" : "font-bold text-[#1f1f1f]"}>
-                  Drag and drop product images
-                </h3>
-                <p className="mt-2 max-w-[360px] text-xs text-gray-500 sm:text-sm">
-                  Recommended size: 1200x1200px. Supports PNG, JPG, and WebP.
-                </p>
-                <span className="mt-5 rounded-full bg-[#f5ecd2] px-5 py-2 text-sm font-semibold text-[#5c4033]">
-                  Choose Files
-                </span>
+                {image ? (
+                  <div className="flex flex-col items-center">
+                    <img src={URL.createObjectURL(image)} alt="Preview" className="h-32 w-32 object-cover rounded-xl mb-3 shadow-md" />
+                    <p className="text-sm font-medium text-gray-500">Click to change</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff7db]">
+                      <img src={camraIcon} alt="" className="h-7 w-7" />
+                    </div>
+                    <h3 className={darkMode ? "font-bold text-white" : "font-bold text-[#1f1f1f]"}>
+                      Upload product image
+                    </h3>
+                    <p className="mt-2 max-w-[360px] text-xs text-gray-500 sm:text-sm">
+                      Recommended size: 1200x1200px. Supports PNG, JPG, and WebP.
+                    </p>
+                    <span className="mt-5 rounded-full bg-[#f5ecd2] px-5 py-2 text-sm font-semibold text-[#5c4033]">
+                      Choose File
+                    </span>
+                  </>
+                )}
               </label>
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                {[a3, a2].map((image, index) => (
-                  <img key={image} src={image} alt={`Product preview ${index + 1}`}
-                    className="h-20 w-20 rounded-2xl border border-gray-200 object-cover"/>
-                ))}
-                <button className="flex h-20 w-20 items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white">
-                  <img src={addIcon} alt="" className="h-6 w-6" />
-                </button>
-              </div>
             </div>
             <div className="pt-2">
               <SectionHeader icon={cateIcon} title="Pricing & Inventory" />

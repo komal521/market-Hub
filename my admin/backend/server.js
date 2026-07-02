@@ -8,14 +8,13 @@ const categoryRoutes = require ("./routes/categoryRoutes");
 const brandRoutes = require("./routes/brandRoutes");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
-const PORT = 5000;
+const PORT = process.env.ADMIN_PORT || 5001;
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/products", productRoutes);
 app.use("/api/categories",categoryRoutes);
 app.use("/api/brands", brandRoutes);
-
 app.use("/api/auth", authRoutes);
 const profileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -391,18 +390,18 @@ app.post("/api/users/create-user", uploadProfile.single("profileImage"), async (
 app.put("/api/users/:id", uploadProfile.single("profileImage"), async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, email, phone, gender, dob, department, role, status, address } = req.body;
+    const { fullName, username, email, phone, gender, dob, department, role, status, address } = req.body;
     const profileImage = req.file ? req.file.filename : null;
     if (profileImage) {
       await db.query(
-        "UPDATE users SET full_name = ?, email = ?, phone = ?, gender = ?, dob = ?, department = ?, role = ?, status = ?, address = ?, profile_image = ? WHERE id = ?",
-        [fullName, email, phone, gender, dob, department, role, status, address, profileImage, id]);
+        "UPDATE users SET full_name = ?, username = ?, email = ?, phone = ?, gender = ?, dob = ?, department = ?, role = ?, status = ?, address = ?, profile_image = ? WHERE id = ?",
+        [fullName, username || '', email, phone, gender, dob, department, role, status, address, profileImage, id]);
     } else {
       await db.query(
-        "UPDATE users SET full_name = ?, email = ?, phone = ?, gender = ?, dob = ?, department = ?, role = ?, status = ?, address = ? WHERE id = ?",
-        [fullName, email, phone, gender, dob, department, role, status, address, id]);
+        "UPDATE users SET full_name = ?, username = ?, email = ?, phone = ?, gender = ?, dob = ?, department = ?, role = ?, status = ?, address = ? WHERE id = ?",
+        [fullName, username || '', email, phone, gender, dob, department, role, status, address, id]);
     }
-    res.json({ success: true, message: "User updated successfully" }); } catch (error) {
+    res.json({ success: true, message: "User updated successfully", profileImage }); } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to update user" });
   }});
@@ -488,6 +487,32 @@ app.get("/api/revenue-graph", async (req, res) => {
     console.error("Revenue graph failed:", error);
     res.status(500).json({ success: false, message: "Revenue graph failed" });
   }});
+
+app.get("/api/report/mix", async (req, res) => {
+  try {
+    res.json({
+      products: 55,
+      services: 30,
+      other: 15
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch mix" });
+  }
+});
+
+app.get("/api/report/engagement", async (req, res) => {
+  try {
+    res.json([
+      { week: "Week 1", height: 110 },
+      { week: "Week 2", height: 155 },
+      { week: "Week 3", height: 130 },
+      { week: "Week 4", height: 180 },
+    ]);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch engagement" });
+  }
+});
+
 app.get("/api/shipping/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;

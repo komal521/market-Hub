@@ -161,7 +161,6 @@ const Categories =() =>{
       })); }
     window.dispatchEvent(
       new Event("wishlistUpdated") );};
-
   return(
     <>
     <Navbar/>
@@ -263,8 +262,7 @@ const Categories =() =>{
                                         : "border-gray-200"
                                     }`}
                                     style={{ backgroundColor: color.hex_code || "#ccc" }}
-                                    title={color.color_name}
-                                  />
+                                    title={color.color_name} />
                                 ))}
                               </div>
                             </div>
@@ -302,8 +300,7 @@ const Categories =() =>{
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
       </svg>
     </button>
-    <button 
-      onClick={() => {
+    <button  onClick={() => {
         const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
         cartItems.push({ img: item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`, title: item.product_name, tag: item.category || "Product", price: `₹${Number(item.base_price || 0).toLocaleString()}` });
         localStorage.setItem("cart", JSON.stringify(cartItems));
@@ -314,21 +311,20 @@ const Categories =() =>{
   </div>
   <div className="p-4">
     <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-      {item.category || "Product"}
+      {item.category || "Product"} {item.brand ? `• ${item.brand}` : ""}
     </p>
     <h3 className="mt-1 font-medium text-gray-800 dark:text-gray-100">
       {item.product_name}
     </h3>
+    {item.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
     <p className="text-sm font-bold text-gray-900 dark:text-white mt-2">
       ₹{Number(item.base_price || 0).toLocaleString()}
     </p>
-    <button 
-      onClick={() => {
+    <button   onClick={() => {
         const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
         cartItems.push({ img: item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`, title: item.product_name, tag: item.category || "Product", price: `₹${Number(item.base_price || 0).toLocaleString()}` });
         localStorage.setItem("cart", JSON.stringify(cartItems));
-        window.location.href = "/cart";
-      }}
+        window.location.href = "/cart"; }}
       className="mt-4 w-full bg-[#6f4e37] hover:bg-[#5a3d2b] transition text-white py-2 rounded-lg">
       Add to Cart
          </button>

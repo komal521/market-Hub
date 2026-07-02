@@ -10,6 +10,11 @@ import filterIcon from "../assets/filter.png";
 import downloadIcon from "../assets/download.png";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import viewIcon from "../assets/view.png";
+import deleteIcon from "../assets/bin (1).png";
+import pencilIcon from "../assets/pencil (1).png";
+import closeIcon from "../assets/close.png";
+import downIcon from "../assets/down.png";
 const defaultStats = [
   {
     title: "Total Revenue",
@@ -40,6 +45,13 @@ const Reports = ({ darkMode }) => {
   const [stats, setStats] = useState(defaultStats);
   const [revenueData, setRevenueData] = useState(Array(12).fill(0));
   const [recentReports, setRecentReports] = useState([]);
+  const [revenueMix, setRevenueMix] = useState({ products: 60, services: 25, other: 15 });
+  const [weeklyEngagement, setWeeklyEngagement] = useState([
+    { week: "Week 1", height: 120 },
+    { week: "Week 2", height: 165 },
+    { week: "Week 3", height: 140 },
+    { week: "Week 4", height: 190 },
+  ]);
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
 
@@ -129,10 +141,29 @@ const Reports = ({ darkMode }) => {
         console.error("Error fetching recent reports:", error);
       }
     };
+    const fetchMixAndEngagement = async () => {
+      try {
+        const [mixRes, engRes] = await Promise.all([
+          fetch("http://localhost:5000/api/report/mix"),
+          fetch("http://localhost:5000/api/report/engagement")
+        ]);
+        if (mixRes.ok) {
+          const mixData = await mixRes.json();
+          setRevenueMix(mixData);
+        }
+        if (engRes.ok) {
+          const engData = await engRes.json();
+          setWeeklyEngagement(engData);
+        }
+      } catch (err) {
+        console.error("Error fetching mix or engagement:", err);
+      }
+    };
 
     fetchStats();
     fetchRevenueGraph();
     fetchRecentReports();
+    fetchMixAndEngagement();
   }, []);
 
   const handleExportPDF = () => {
@@ -321,7 +352,15 @@ const Reports = ({ darkMode }) => {
             Income share by service type
           </p>
           <div className="flex justify-center mt-10">
-            <div className="relative w-[220px] h-[220px] rounded-full bg-[conic-gradient(#e4a93d_0deg,#e4a93d_150deg,#c15b17_150deg,#c15b17_250deg,#000_250deg,#000_330deg,#e4a93d_330deg)] flex items-center justify-center shadow-lg">
+            <div 
+              className="relative w-[220px] h-[220px] rounded-full flex items-center justify-center shadow-lg"
+              style={{
+                background: `conic-gradient(
+                  #e4a93d 0deg ${revenueMix.products * 3.6}deg, 
+                  #c15b17 ${revenueMix.products * 3.6}deg ${(revenueMix.products + revenueMix.services) * 3.6}deg, 
+                  #000 ${(revenueMix.products + revenueMix.services) * 3.6}deg 360deg
+                )`
+              }}  >
               <div
                 className={`w-[120px] h-[120px] rounded-full
                 ${darkMode ? "bg-[#161616]" : "bg-[#edf6fa]"}`} />
@@ -356,17 +395,13 @@ const Reports = ({ darkMode }) => {
       New user registrations over 4 weeks
     </p>
     <div className="mt-8 flex items-end justify-between gap-4 h-[220px] px-2">
-      {[
-        { week: "Week 1", height: "h-[120px]" },
-        { week: "Week 2", height: "h-[165px]" },
-        { week: "Week 3", height: "h-[140px]" },
-        { week: "Week 4", height: "h-[190px]" },
-      ].map((item, index) => (
+      {weeklyEngagement.map((item, index) => (
         <div
           key={index}
           className="flex flex-col items-center justify-end gap-3 flex-1" >
           <div
-            className={`${item.height} w-full max-w-[42px] rounded-xl bg-[#6f4e37] shadow-md transition-all duration-300 hover:scale-105`} />
+            style={{ height: `${item.height}px` }}
+            className="w-full max-w-[42px] rounded-xl bg-[#6f4e37] shadow-md transition-all duration-300 hover:scale-105" />
 
           <span
             className={`text-xs whitespace-nowrap
@@ -404,26 +439,25 @@ const Reports = ({ darkMode }) => {
     <div className="mt-6 overflow-x-auto">
       <div className="min-w-[700px]">
         {/* HEAD */}
-        <div className={`grid grid-cols-[1fr_1.5fr_1fr_1fr_1fr] py-4 text-xs font-semibold uppercase tracking-wider
+        <div className={`grid grid-cols-[1fr_1.5fr_1fr_1fr_1fr_120px] py-4 text-xs font-semibold uppercase tracking-wider
           ${darkMode ? "border-[#222] text-gray-500" : "border-[#f1f1f1] text-gray-400"}`}>
           <span>Report ID</span>
           <span>Client Name</span>
           <span>Revenue</span>
           <span>Status</span>
-         <span>Date</span> 
-          
+          <span>Date</span>
+          <span className="text-right pr-4">Actions</span>
         </div>
         {recentReports.length > 0 ? (
           recentReports.map((item, index) => (
             <div
               key={index}
-              className={`grid grid-cols-[1fr_1.5fr_1fr_1fr_1fr] py-5 text-sm items-center border-b
+              className={`grid grid-cols-[1fr_1.5fr_1fr_1fr_1fr_120px] py-5 text-sm items-center border-b
               ${
                 darkMode
                   ? "border-[#222] text-gray-300"
                   : "border-[#f1f1f1] text-gray-700"
               }`} >
-     
               <span className="text-[#d9a63d] font-medium">{item.id}</span>
               <span className="font-semibold">{item.client}</span>
               <span className="font-medium">{item.revenue}</span>
@@ -434,7 +468,23 @@ const Reports = ({ darkMode }) => {
                 </span>
               </div>
              <span>{item.date}</span> 
-            
+             <div className="flex items-center gap-2 justify-end pr-2">
+               <button onClick={() => setViewItem(item)}
+                 className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-100 text-black transition-all"
+                 title="View">
+                 <img src={viewIcon} alt="View" className="w-4 h-4" />
+               </button>
+               <button  onClick={() => handleEdit(item)}
+                 className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-amber-100 text-amber-600 transition-all"
+                 title="Edit">
+                 <img src={pencilIcon} alt="Edit" className="w-4 h-4" />
+               </button>
+               <button onClick={() => handleDelete(item)}
+                 className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-100 text-red-600 transition-all"
+                 title="Delete" >
+                 <img src={deleteIcon} alt="Delete" className="w-4 h-4" />
+               </button>
+             </div>
             </div>
           ))
         ) : (
@@ -507,7 +557,7 @@ const Reports = ({ darkMode }) => {
             darkMode ? "bg-[#1a1a1a] text-white border border-[#333]" : "bg-white text-gray-800"
           }`}
           onClick={e => e.stopPropagation()}>
-          <button onClick={() => setViewItem(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 transition text-lg font-bold">✕</button>
+          <button onClick={() => setViewItem(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 transition text-lg font-bold"><img src={closeIcon} alt="Close" className="w-4 h-4 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" /></button>
           <h3 className="text-xl font-bold mb-6 text-[#6f4e37]">Report Details</h3>
           <div className="space-y-4">
             {[
@@ -534,7 +584,7 @@ const Reports = ({ darkMode }) => {
             darkMode ? "bg-[#1a1a1a] text-white border border-[#333]" : "bg-white text-gray-800"
           }`}
           onClick={e => e.stopPropagation()}>
-          <button onClick={() => setEditItem(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 transition text-lg font-bold">✕</button>
+          <button onClick={() => setEditItem(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 transition text-lg font-bold"><img src={closeIcon} alt="Close" className="w-4 h-4 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" /></button>
           <h3 className="text-xl font-bold mb-6 text-[#6f4e37]">Edit — {editItem.client}</h3>
           <div className="space-y-4">
             <div>
@@ -546,14 +596,32 @@ const Reports = ({ darkMode }) => {
               />
             </div>
             <div>
+              <label className="text-xs font-bold uppercase text-gray-400 mb-1 block">Revenue</label>
+              <input
+                defaultValue={editItem.revenue}
+                className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${ darkMode ? "bg-[#252525] border-[#333] text-white" : "bg-gray-50 border-gray-200"}`}
+                onChange={e => setEditItem(prev => ({...prev, revenue: e.target.value}))}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase text-gray-400 mb-1 block">Date</label>
+              <input
+                type="text"
+                defaultValue={editItem.date}
+                className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${ darkMode ? "bg-[#252525] border-[#333] text-white" : "bg-gray-50 border-gray-200"}`}
+                onChange={e => setEditItem(prev => ({...prev, date: e.target.value}))}
+              />
+            </div>
+            <div className="relative">
               <label className="text-xs font-bold uppercase text-gray-400 mb-1 block">Status</label>
               <select
                 defaultValue={editItem.status}
-                className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none ${ darkMode ? "bg-[#252525] border-[#333] text-white" : "bg-gray-50 border-gray-200"}`}
+                className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none appearance-none ${ darkMode ? "bg-[#252525] border-[#333] text-white" : "bg-gray-50 border-gray-200"}`}
                 onChange={e => setEditItem(prev => ({...prev, status: e.target.value}))}>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
               </select>
+              <img src={downIcon} alt="" className="absolute right-4 top-[38px] w-4 h-4 pointer-events-none opacity-60" />
             </div>
           </div>
           <div className="mt-6 flex gap-3">
@@ -566,7 +634,11 @@ const Reports = ({ darkMode }) => {
                   : `http://localhost:5000/api/categories/${numericId}`;
                 try {
                   const body = isProduct
-                    ? { product_name: editItem.client, is_active: editItem.status === "Active" ? 1 : 0 }
+                    ? { 
+                        product_name: editItem.client, 
+                        is_active: editItem.status === "Active" ? 1 : 0,
+                        base_price: editItem.revenue ? Number(editItem.revenue.toString().replace(/[^0-9.]/g, '')) : undefined
+                      }
                     : { category_name: editItem.client, status: editItem.status };
                   const res = await fetch(endpoint, {
                     method: "PUT",
@@ -575,7 +647,7 @@ const Reports = ({ darkMode }) => {
                   });
                   const data = await res.json();
                   if (data.success) {
-                    setRecentReports(prev => prev.map(r => r.id === editItem.id ? { ...r, client: editItem.client, status: editItem.status } : r));
+                    setRecentReports(prev => prev.map(r => r.id === editItem.id ? { ...r, client: editItem.client, status: editItem.status, revenue: editItem.revenue, date: editItem.date } : r));
                     alert("Updated successfully!");
                     setEditItem(null);
                   } else { alert("Update failed: " + (data.message || "Unknown")); }

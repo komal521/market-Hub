@@ -101,6 +101,9 @@ const Cart = () => {
                       <h3 className="font-semibold text-[#111] dark:text-white text-sm md:text-base leading-tight truncate">
                         {item.title}  </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.tag || item.subtitle}</p>
+                      {item.variant && (
+                        <p className="text-xs font-medium text-[#d9a63d] mt-1">{item.variant}</p>
+                      )}
                       <span className="inline-block mt-2 text-xs font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">
                         In Stock </span>
                       <div className="flex items-center gap-4 mt-3">

@@ -12,7 +12,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Wishlist from "./pages/Wishlist";
 import OrderConfirmation from "./pages/OrderConfirmation";
-
+import EditProfile from "./pages/EditProfile";
 function App() {
   return (
     <BrowserRouter>
@@ -27,6 +27,7 @@ function App() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/contact" element={<Contact />}/>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/wishlist" element={<Wishlist />} />

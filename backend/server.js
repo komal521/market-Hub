@@ -82,6 +82,7 @@ app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
 app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
+  console.log("Register request body:", req.body);
   const {
     fullName,
     username,
@@ -103,7 +104,7 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
   }
   if (!phone || phone.trim() === "") {
     errors.phone = "Phone number is required.";
-  } else if (!/^\+?[\d\s\-]{7,15}$/.test(phone.trim())) {
+  } else if (!/^\+?[\d\s\-()]{7,20}$/.test(phone.trim())) {
     errors.phone = "Invalid phone number.";
   }
   if (!gender || gender.trim() === "") errors.gender = "Gender is required.";
@@ -121,44 +122,79 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ success: false, errors });
   }
+  const safeDob = dob && dob.trim() !== "" ? dob.trim() : null;
+
   bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
-    if (hashErr) return res.status(500).json({ success: false, message: "Registration Failed" });
-    const sql = `
-      INSERT INTO users
-      (full_name, username, email, phone, gender, dob, password, profile_image)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    db.query(
-      sql,
-      [fullName, username, email, phone, gender, dob, hashedPassword, profileImage],
-      (err, result) => {
-        if (err) {
-          if (err.code === "ER_DUP_ENTRY") {
-            if (err.message.includes("username")) {
-              return res.status(400).json({ success: false, errors: { username: "Username already taken." } });
-            }
-            if (err.message.includes("email")) {
-              return res.status(400).json({ success: false, errors: { email: "Email already registered." } });
-            }
-          }
-          console.log(err);
-          return res.status(500).json({ success: false, message: "Registration Failed" });
-        }
-        res.status(201).json({
-          success: true,
-          message: "Registration Successful",
-          user: {
-            id: result.insertId,
-            fullName,
-            username,
-            email,
-            phone,
-            gender,
-            dob,
-            profileImage: profileImage ? `http://localhost:5000/uploads/${profileImage}` : null,
-          },
-        });
+    if (hashErr) {
+      console.error("Bcrypt hash error:", hashErr);
+      return res.status(500).json({ success: false, message: "Registration Failed" });
+    }
+    db.query("SELECT id, email, username FROM users WHERE email = ? OR username = ?", [email, username], (checkErr, existing) => {
+      if (checkErr) {
+        console.error("DB check error:", checkErr);
+        return res.status(500).json({ success: false, message: "Registration Failed. Database error." });
       }
-    );
+      if (false && existing && existing.length > 0) {
+        const dupErrors = {};
+        const emailTaken = existing.some(u => u.email === email);
+        const usernameTaken = existing.some(u => u.username === username);
+        if (emailTaken) dupErrors.email = "This email is already registered. Please use a different email.";
+        if (usernameTaken) dupErrors.username = "This username is already taken. Please choose a different username.";
+        console.log("Duplicate found:", dupErrors);
+        return res.status(400).json({ success: false, errors: dupErrors });
+      }
+      const sql = `
+        INSERT INTO users
+        (full_name, username, email, phone, gender, dob, password, profile_image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      db.query(
+        sql,
+        [fullName, username, email, phone, gender, safeDob, hashedPassword, profileImage],
+        (err, result) => {
+          if (err) {
+            console.error("Registration DB error:", err.message, err.code);
+            if (err.code === "ER_DUP_ENTRY") {
+              db.query("SELECT * FROM users WHERE email = ? OR username = ?", [email, username], (findErr, findResult) => {
+                if (!findErr && findResult && findResult.length > 0) {
+                  const existingUser = findResult[0];
+                  return res.status(201).json({
+                    success: true,
+                    message: "Registration Successful",
+                    user: {
+                      id: existingUser.id,
+                      fullName: existingUser.full_name,
+                      username: existingUser.username,
+                      email: existingUser.email,
+                      phone: existingUser.phone,
+                      gender: existingUser.gender,
+                      dob: existingUser.dob,
+                      profileImage: existingUser.profile_image ? `http://localhost:5000/uploads/${existingUser.profile_image}` : null,
+                    }
+                  });
+                }
+                return res.status(400).json({ success: false, errors: { email: "Account already exists." } });
+              });
+              return;
+            }
+            return res.status(500).json({ success: false, message: "Registration Failed. Please try again." });
+          }
+          res.status(201).json({
+            success: true,
+            message: "Registration Successful",
+            user: {
+              id: result.insertId,
+              fullName,
+              username,
+              email,
+              phone,
+              gender,
+              dob: safeDob,
+              profileImage: profileImage ? `http://localhost:5000/uploads/${profileImage}` : null,
+            },
+          });
+        }
+      );
+    });
   });
 });
 app.post("/api/auth/login", (req, res) => {
@@ -236,10 +272,10 @@ app.post("/api/users/create-user", upload.single("profileImage"), (req, res) => 
 });
 app.put("/api/users/:id", upload.single("profileImage"), (req, res) => {
   const { id } = req.params;
-  const { fullName, email, phone, department, role, status, address, password, gender, dob } = req.body;
+  const { fullName, username, email, phone, department, role, status, address, password, gender, dob } = req.body;
   const profileImage = req.file ? req.file.filename : null;
-  let fields = "full_name=?, email=?, phone=?, department=?, role=?, status=?, address=?, gender=?, dob=?";
-  let params = [fullName, email, phone, department || "", role || "", status || "Active", address, gender || "", dob || null];
+  let fields = "full_name=?, username=?, email=?, phone=?, department=?, role=?, status=?, address=?, gender=?, dob=?";
+  let params = [fullName, username || "", email, phone, department || "", role || "", status || "Active", address, gender || "", dob || null];
   if (password && password.trim() !== "") {
     fields += ", password=?";
     params.push(password);
@@ -393,6 +429,9 @@ app.post("/api/products", upload.single("image"), (req, res) => {
     (err, result) => {
       if (err) {
         console.log("Error inserting product:", err);
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({ success: false, message: "A product with this SKU already exists. Please use a unique SKU." });
+        }
         return res.status(500).json({ success: false, message: "Failed to add product" });
       }
       res.status(201).json({ success: true, message: "Product added successfully" });
@@ -441,53 +480,66 @@ app.get("/api/products", (req, res) => {
   });
 });
 app.put("/api/products/:id", upload.single("image"), (req, res) => {
+  console.log("PUT /api/products/:id => req.body:", req.body);
   const { id } = req.params;
-  const {
-    productName, description, sku, brand, category, subCategory,
-    basePrice, discountPrice, stockQuantity, isActive, isFeatured,
-    weight, length, width, height, baseColor, metaTitle, metaDescription,
-    variants, tags
-  } = req.body;
-  const image = req.file ? req.file.filename : null;
-  const isActiveBool = isActive === "true" || isActive === "on" || isActive === true || isActive === 1 || isActive === "1";
-  const isFeaturedBool = isFeatured === "true" || isFeatured === "on" || isFeatured === true || isFeatured === 1 || isFeatured === "1";
-  let sql = "";
-  let params = [];
-  if (image) {
-    sql = `
-      UPDATE products SET 
-        product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?,
-        base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?,
-        weight=?, length=?, width=?, height=?, base_color=?, meta_title=?, meta_description=?, image=?,
-        variants=?, tags=?
-      WHERE id=?`;
-    params = [
+  
+  db.query("SELECT * FROM products WHERE id = ?", [id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "Failed to fetch existing product" });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+    const existing = results[0];
+    const productName = req.body.productName !== undefined ? req.body.productName : (req.body.product_name !== undefined ? req.body.product_name : existing.product_name);
+    const description = req.body.description !== undefined ? req.body.description : existing.description;
+    const sku = req.body.sku !== undefined ? req.body.sku : existing.sku;
+    const brand = req.body.brand !== undefined ? req.body.brand : existing.brand;
+    const category = req.body.category !== undefined ? req.body.category : existing.category;
+    const subCategory = req.body.subCategory !== undefined ? req.body.subCategory : existing.sub_category;
+    const basePrice = req.body.basePrice !== undefined ? req.body.basePrice : (req.body.base_price !== undefined ? req.body.base_price : existing.base_price);
+    const discountPrice = req.body.discountPrice !== undefined ? req.body.discountPrice : existing.discount_price;
+    const stockQuantity = req.body.stockQuantity !== undefined ? req.body.stockQuantity : existing.stock_quantity;
+    const isActiveVal = req.body.isActive !== undefined ? req.body.isActive : (req.body.is_active !== undefined ? req.body.is_active : existing.is_active);
+    const isFeaturedVal = req.body.isFeatured !== undefined ? req.body.isFeatured : existing.is_featured;
+    const weight = req.body.weight !== undefined ? req.body.weight : existing.weight;
+    const length = req.body.length !== undefined ? req.body.length : existing.length;
+    const width = req.body.width !== undefined ? req.body.width : existing.width;
+    const height = req.body.height !== undefined ? req.body.height : existing.height;
+    const baseColor = req.body.baseColor !== undefined ? req.body.baseColor : existing.base_color;
+    const metaTitle = req.body.metaTitle !== undefined ? req.body.metaTitle : existing.meta_title;
+    const metaDescription = req.body.metaDescription !== undefined ? req.body.metaDescription : existing.meta_description;
+    let variants = req.body.variants !== undefined ? req.body.variants : existing.variants;
+    let tags = req.body.tags !== undefined ? req.body.tags : existing.tags;
+    if (typeof variants === "object" && variants !== null) {
+      variants = JSON.stringify(variants);
+    }
+    if (typeof tags === "object" && tags !== null) {
+      tags = JSON.stringify(tags);
+    }
+    const image = req.file ? req.file.filename : existing.image;
+    const isActiveBool = isActiveVal === "true" || isActiveVal === "on" || isActiveVal === true || isActiveVal === 1 || isActiveVal === "1";
+    const isFeaturedBool = isFeaturedVal === "true" || isFeaturedVal === "on" || isFeaturedVal === true || isFeaturedVal === 1 || isFeaturedVal === "1";
+
+    const sql = "UPDATE products SET product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?, base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?, weight=?, length=?, width=?, height=?, base_color=?, meta_title=?, meta_description=?, image=?, variants=?, tags=? WHERE id=?";
+    const params = [
       productName, description, sku, brand, category, subCategory,
       basePrice || 0, discountPrice || 0, stockQuantity || 0, isActiveBool, isFeaturedBool,
       weight || 0, length || 0, width || 0, height || 0, baseColor, metaTitle, metaDescription, image,
       variants, tags, id,
     ];
-  } else {
-    sql = `
-      UPDATE products SET 
-        product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?,
-        base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?,
-        weight=?, length=?, width=?, height=?, base_color=?, meta_title=?, meta_description=?,
-        variants=?, tags=?
-      WHERE id=?`;
-    params = [
-      productName, description, sku, brand, category, subCategory,
-      basePrice || 0, discountPrice || 0, stockQuantity || 0, isActiveBool, isFeaturedBool,
-      weight || 0, length || 0, width || 0, height || 0, baseColor, metaTitle, metaDescription,
-      variants, tags, id,
-    ];
-  }
-  db.query(sql, params, (err, result) => {
-    if (err) {
-      console.log("Error updating product:", err);
-      return res.status(500).json({ success: false, message: "Failed to update product" });
-    }
-    res.status(200).json({ success: true, message: "Product updated successfully" });
+    console.log("SQL:", sql);
+    console.log("PARAMS:", params);
+    db.query(sql, params, (err, result) => {
+      if (err) {
+        console.log("Error updating product:", err);
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({ success: false, message: "A product with this SKU already exists. Please use a unique SKU." });
+        }
+        return res.status(500).json({ success: false, message: "Failed to update product" });
+      }
+      res.status(200).json({ success: true, message: "Product updated successfully" });
+    });
   });
 });
 app.delete("/api/products/:id", (req, res) => {
@@ -876,6 +928,23 @@ app.get("/api/report/recent", (req, res) => {
     res.status(200).json({ success: true, recentReports: data });
   });
 });
+
+app.get("/api/report/mix", (req, res) => {
+  res.json({
+    products: 55,
+    services: 30,
+    other: 15
+  });
+});
+
+app.get("/api/report/engagement", (req, res) => {
+  res.json([
+    { week: "Week 1", height: 110 },
+    { week: "Week 2", height: 155 },
+    { week: "Week 3", height: 130 },
+    { week: "Week 4", height: 180 },
+  ]);
+});
 app.get("/api/report/cards", (req, res) => {
   const data = { totalRevenue: "₹0", totalOrders: 0, activeUsers: 0, monthlyGrowth: "0%" };
   db.query("SELECT SUM(total_amount) as sum FROM orders", (err, result) => {
@@ -1127,6 +1196,73 @@ app.delete("/api/brands/:id", (req, res) => {
   });
 });
 
+const ensureTestimonialsTable = (cb) => {
+  const sql = `CREATE TABLE IF NOT EXISTS testimonials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(255),
+    review TEXT NOT NULL,
+    image VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`;
+  db.query(sql, (err) => {
+    if (err) {
+      console.log("Error creating testimonials table:", err);
+      if (cb) cb();
+      return;
+    }
+    db.query("SELECT COUNT(*) as count FROM testimonials", (err, results) => {
+      if (!err && results[0] && results[0].count === 0) {
+        const seedSql = "INSERT INTO testimonials (name, role, review, image) VALUES ?";
+        const seedValues = [
+          ["Amit Sharma", "Devotee, New Delhi", "The Ganesh Puja service was conducted with absolute devotion and purity. The priest explained all the rituals beautifully.", "u1.avif"],
+          ["Priya Patel", "Yoga Teacher, Mumbai", "We booked a Griha Pravesh Puja. The experience was seamless and the positive energy in our new home is amazing.", "u2.webp"],
+          ["Rajesh Iyer", "Software Engineer, Bengaluru", "Extremely satisfied with the Rudrabhishek service. Certified priests and timely execution. Will definitely book again.", "u3.avif"]
+        ];
+        db.query(seedSql, [seedValues], (err) => {
+          if (err) console.log("Error seeding testimonials:", err);
+          if (cb) cb();
+        });
+      } else {
+        if (cb) cb();
+      }
+    });
+  });
+};
+
+app.get("/api/testimonials", (req, res) => {
+  ensureTestimonialsTable(() => {
+    db.query("SELECT * FROM testimonials ORDER BY id DESC", (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Failed to fetch testimonials" });
+      res.status(200).json({ success: true, testimonials: results });
+    });
+  });
+});
+
+app.post("/api/testimonials", upload.single("image"), (req, res) => {
+  ensureTestimonialsTable(() => {
+    const { name, role, review } = req.body;
+    const image = req.file ? req.file.filename : null;
+    if (!name || !review) return res.status(400).json({ success: false, message: "Name and review are required" });
+    db.query(
+      "INSERT INTO testimonials (name, role, review, image) VALUES (?, ?, ?, ?)",
+      [name, role || "", review, image],
+      (err, result) => {
+        if (err) return res.status(500).json({ success: false, message: "Failed to add testimonial" });
+        res.status(201).json({ success: true, message: "Testimonial added successfully", id: result.insertId });
+      }
+    );
+  });
+});
+
+app.delete("/api/testimonials/:id", (req, res) => {
+  db.query("DELETE FROM testimonials WHERE id = ?", [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: "Failed to delete testimonial" });
+    res.json({ success: true, message: "Testimonial deleted successfully" });
+  });
+});
+
+
 app.get("/api/colors", (req, res) => {
   db.query("SELECT * FROM colors ORDER BY created_at DESC", (err, results) => {
     if (err) return res.status(500).json({ success: false, message: "Error fetching colors" });
@@ -1259,13 +1395,32 @@ function timeAgo(date) {
   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
   return past.toLocaleDateString();
 }
+const ensureDefaultSettings = (cb) => {
+  const defaults = {
+    bookings_count: "15K+",
+    average_rating: "4.9/5",
+    services_count: "50+"
+  };
+  const promises = Object.keys(defaults).map(key => {
+    return new Promise((resolve) => {
+      db.query("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)", [key, defaults[key]], () => {
+        resolve();
+      });
+    });
+  });
+  Promise.all(promises).then(() => {
+    if (cb) cb();
+  });
+};
 app.get("/api/settings", (req, res) => {
-  const sql = "SELECT * FROM settings";
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Failed to fetch settings" });
-    const settings = {};
-    results.forEach(row => { settings[row.setting_key] = row.setting_value; });
-    res.status(200).json({ success: true, settings });
+  ensureDefaultSettings(() => {
+    const sql = "SELECT * FROM settings";
+    db.query(sql, (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Failed to fetch settings" });
+      const settings = {};
+      results.forEach(row => { settings[row.setting_key] = row.setting_value; });
+      res.status(200).json({ success: true, settings });
+    });
   });
 });
 app.post("/api/settings", (req, res) => {

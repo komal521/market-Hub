@@ -29,6 +29,7 @@ const Profile = () => {
   const [userData, setUserData] = useState({
     id: "", fullName: "", email: "", phone: "", address: "",
     profileImage: "", username: "", });
+  const [profileFile, setProfileFile] = useState(null);
   const [orders, setOrders] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
@@ -52,8 +53,7 @@ const Profile = () => {
       address: storedUser.address || "",
       profileImage: storedUser.profileImage || "",
       username: storedUser.username || "",
-    });
-    
+    }); 
     let parsedAddress = {
       name: storedUser.fullName || "",
       email: storedUser.email || "",
@@ -70,21 +70,18 @@ const Profile = () => {
         const offset = parts[1] && parts[1].includes("@") ? 1 : 0;
         const linePart = parts[1 + offset] ? parts[1 + offset].trim() : "";
         const cityPinPart = parts[2 + offset] ? parts[2 + offset].trim() : "";
-        const phonePart = parts[3 + offset] ? parts[3 + offset].trim() : "";
-        
+        const phonePart = parts[3 + offset] ? parts[3 + offset].trim() : "";   
         let city = cityPinPart;
         let pincode = "";
         if (cityPinPart.includes("-")) {
           const cp = cityPinPart.split("-");
           city = cp[0].trim();
           pincode = cp[1].trim();
-        }
-        
+        }     
         let phoneVal = phonePart;
         if (phonePart.toLowerCase().startsWith("ph:")) {
           phoneVal = phonePart.substring(3).trim();
-        }
-        
+        }        
         parsedAddress = {
           name: namePart || storedUser.fullName || "",
           email: emailPart || storedUser.email || "",
@@ -96,7 +93,6 @@ const Profile = () => {
       }
     }
     setSavedAddress(parsedAddress);
-
     const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
     setCartCount(cartItems.length);
     if (storedUser.id) {
@@ -120,19 +116,9 @@ const Profile = () => {
             email: found.email,
             phone: found.phone,
             address: found.address,
+            username: found.username,
           };
         }
-      }
-      try {
-        const sRes = await fetch("http://localhost:5000/api/settings");
-        const sData = await sRes.json();
-        if (sData.success && sData.settings) {
-          if (sData.settings.fullName) updatedData.fullName = sData.settings.fullName;
-          if (sData.settings.email) updatedData.email = sData.settings.email;
-          if (sData.settings.phone) updatedData.phone = sData.settings.phone;
-        }
-      } catch (e) {
-        console.log("Settings fetch failed:", e.message);
       }
       setUserData((prev) => ({
         ...prev,
@@ -167,37 +153,6 @@ const Profile = () => {
       setActivities(data);
     } catch (err) {
       console.log("Activities fetch failed:", err);
-    }
-  };
-  const handleSave = async () => {
-    if (!userData.id) {
-      setSaveMsg("Please log in to save profile.");
-      return;
-    }
-    setIsSaving(true);
-    setSaveMsg("");
-    try {
-      const res = await fetch(`http://localhost:5000/api/users/profile/${userData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSaveMsg("✓ Profile updated successfully!");
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ ...JSON.parse(localStorage.getItem("user")), ...userData })
-        );
-        setIsEditing(false);
-        setTimeout(() => setSaveMsg(""), 3000);
-      } else {
-        setSaveMsg("Failed to update profile.");
-      }
-    } catch (err) {
-      setSaveMsg("Server error. Please start the backend.");
-    } finally {
-      setIsSaving(false);
     }
   };
   const handleLogout = () => {
@@ -258,38 +213,38 @@ const Profile = () => {
                   <img src={b3} alt=""
                     className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-black dark:border-white" />
                 )}
-                <div className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 rounded-full p-2 shadow cursor-pointer hover:bg-yellow-50 dark:hover:bg-gray-600 transition">
-                  <img src={pencil} alt="" className="w-5 h-5 dark:invert" />
-                </div>
+                {isEditing ? (
+                  <label className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 rounded-full p-2 shadow cursor-pointer hover:bg-yellow-50 dark:hover:bg-gray-600 transition">
+                    <img src={pencil} alt="" className="w-5 h-5 dark:invert" />
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setProfileFile(e.target.files[0]);
+                        setUserData({ ...userData, profileImage: URL.createObjectURL(e.target.files[0]) });
+                      }
+                    }} />
+                  </label>
+                ) : (
+                  <button onClick={() => navigate("/edit-profile")}
+                    className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 rounded-full p-2 shadow hover:bg-yellow-50 dark:hover:bg-gray-600 transition cursor-pointer">
+                    <img src={pencil} alt="" className="w-5 h-5 dark:invert" />
+                  </button>
+                )}
               </div>
               <div>
                 <h2 className="text-2xl md:text-4xl font-bold">
-                  {loading ? "Loading..." : userData.fullName || "Guest User"}
+                  {loading ? "Loading..." : `${userData.fullName || ""} ${userData.username || ""}`.trim() || "Guest User"}
                 </h2>
                 <p className="text-gray-750 dark:text-gray-300 mt-1 text-sm">{userData.email}</p>
+                {userData.phone && (
+                  <p className="text-gray-750 dark:text-gray-300 mt-0.5 text-sm">{userData.phone}</p>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-center gap-3">
-              {saveMsg && (
-                <p className={`text-sm font-medium px-4 py-1 rounded-full ${saveMsg.startsWith("✓") ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400" : "bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-450"}`}>
-                  {saveMsg}
-                </p>
-              )}
-              {isEditing ? (
-                <div className="flex gap-3">
-                  <button onClick={handleSave} disabled={isSaving}
-                    className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-full font-semibold hover:bg-green-700 dark:hover:bg-green-100 disabled:opacity-60 transition">
-                    {isSaving ? "Saving..." : "Save Profile"}
-                  </button>
-                  <button onClick={() => setIsEditing(false)}
-                    className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-full font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                    Cancel
-                  </button>
-                </div> ) : (
-                <button onClick={() => setIsEditing(true)}
-                  className="bg-[#6f4e37] text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-[#5a3d2b] transition">
-                  Edit Profile
-                </button>  )}
+              <button onClick={() => navigate("/edit-profile")}
+                className="bg-[#6f4e37] text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-[#5a3d2b] transition">
+                Edit Profile
+              </button>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
@@ -321,7 +276,7 @@ const Profile = () => {
                       <p className="text-gray-400 dark:text-gray-500 text-sm mt-0.5">Manage your contact and shipping details.</p>
                     </div>
                     <button
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => navigate("/edit-profile")}
                       className="focus:outline-none" >
                       <img src={pencil} alt=""
                        className="w-5 h-5 cursor-pointer opacity-60 hover:opacity-100 transition dark:invert" />
@@ -339,6 +294,19 @@ const Profile = () => {
                               onChange={(e) => setUserData({ ...userData, fullName: e.target.value })} />
                           ) : (
                             <span className="text-gray-700 dark:text-gray-200 text-sm">{userData.fullName || "—"}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Username / Surname</label>
+                        <div className="flex items-center gap-3 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 min-h-[52px] focus-within:border-amber-400 dark:focus-within:border-amber-500 transition bg-white dark:bg-gray-900">
+                          <img src={user} alt="" className="w-5 h-5 flex-shrink-0 dark:invert" />
+                          {isEditing ? (
+                            <input type="text" className="w-full outline-none text-gray-700 dark:text-gray-205 text-sm bg-transparent"
+                              value={userData.username}
+                              onChange={(e) => setUserData({ ...userData, username: e.target.value })} />
+                          ) : (
+                            <span className="text-gray-700 dark:text-gray-200 text-sm">{userData.username || "—"}</span>
                           )}
                         </div>
                       </div>

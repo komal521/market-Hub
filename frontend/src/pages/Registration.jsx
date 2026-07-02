@@ -30,11 +30,24 @@ const handleChange = (e) => {
 };
 const handleSubmit = async (e) => {
   e.preventDefault();
-
+  if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
   try {
+    const fd = new FormData();
+    fd.append("fullName", formData.fullName);
+    fd.append("username", formData.username);
+    fd.append("email", formData.email);
+    fd.append("phone", formData.phone);
+    fd.append("gender", formData.gender);
+    fd.append("dob", formData.dob);
+    fd.append("password", formData.password);
+    fd.append("confirmPassword", formData.confirmPassword);
     const response = await axios.post(
       "http://localhost:5000/api/auth/register",
-      formData
+      fd,
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
     if (response.data.success && response.data.user) {
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -43,7 +56,14 @@ const handleSubmit = async (e) => {
     navigate("/home"); 
   } catch (error) {
     console.error(error);
-    alert("Registration Failed");
+    if (error.response && error.response.data && error.response.data.errors) {
+      const errMsgs = Object.values(error.response.data.errors).join("\n");
+      alert(errMsgs);
+    } else if (error.response && error.response.data && error.response.data.message) {
+      alert(error.response.data.message);
+    } else {
+      alert("Registration Failed. Please try again.");
+    }
   }
 };
 const navigate = useNavigate();
@@ -73,7 +93,7 @@ const navigate = useNavigate();
           </div>
           <div>
             <label className="text-sm font-medium dark:text-gray-200">
-              Username </label>
+              Username / Surname </label>
             <div className="flex items-center border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-full px-4 h-12 mt-2">
               <img src={userIcon} alt="" className="w-4 h-4 dark:invert" />
               <input type="text" name="username" placeholder="e.g. john_doe" onChange={handleChange}

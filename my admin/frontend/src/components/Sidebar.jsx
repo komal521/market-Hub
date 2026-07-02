@@ -28,8 +28,8 @@ import EditUser from "../pages/EditUser";
 import EditCategory from "../pages/EditCategory";
 import EditEnquiry from "../pages/EditEnquiry";
 import EditProduct from "../pages/EditProduct";
+import EditProfile from "../pages/EditProfile";
 import packageIcon2 from "../assets/package.png";
-
 const SIDEBAR_W = "w-[260px]";
 const menuItems = [
   {
@@ -64,7 +64,6 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
   const [editData, setEditData] = useState(null);
   const [adminName, setAdminName] = useState("Admin");
   const sidebarRef = useRef(null);
-
   useEffect(() => {
     fetch("http://localhost:5000/api/settings")
       .then(res => res.json())
@@ -173,8 +172,9 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           {active === "Categories" && <Categories darkMode={darkMode} setActive={setActive} setEditData={setEditData} />}
           {active === "Enquiries" && <Enquiries darkMode={darkMode} setActive={setActive} setEditData={setEditData} />}
           {active === "Support" && <Support darkMode={darkMode} setActive={setActive} setEditData={setEditData} />}
-          {active === "Profile" && <Profile darkMode={darkMode} />}
+          {active === "Profile" && <Profile darkMode={darkMode} setActive={setActive} />}
           {active === "Settings" && <Settings darkMode={darkMode} />}
+          {active === "Edit Profile" && <EditProfile darkMode={darkMode} setActive={setActive} />}
           {active === "Edit Support" && <EditSupport darkMode={darkMode} editData={editData} setActive={setActive} />}
           {active === "Edit Order" && <EditOrder darkMode={darkMode} editData={editData} setActive={setActive} />}
           {active === "Edit User" && <EditUser darkMode={darkMode} editData={editData} setActive={setActive} />}
@@ -184,7 +184,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
           {![
             "Dashboard", "Order Management", "Product Management", "Users",
             "Categories", "Reports", "Enquiries", "Support", "Profile", "Settings",
-            "Edit Support", "Edit Order", "Edit User", "Edit Category", "Edit Enquiry", "Edit Product"
+            "Edit Profile", "Edit Support", "Edit Order", "Edit User", "Edit Category", "Edit Enquiry", "Edit Product"
           ].includes(active) && (
             <div className="p-6 md:p-10">
               <div className={`rounded-3xl min-h-[70vh] shadow-sm flex items-center justify-center ${darkMode ? "bg-gray-800" : "bg-white"}`}>

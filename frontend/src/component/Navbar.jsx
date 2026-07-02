@@ -104,7 +104,7 @@ const Navbar = () => {
             {showSearchDropdown && searchResults.length > 0 && (
               <div className={`absolute top-full mt-2 w-full rounded-xl shadow-xl overflow-hidden z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
                 {searchResults.map((product) => (
-                  <Link key={product.id} to={`/products`} className={`flex items-center gap-3 p-3 hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
+                  <Link key={product.id} to={`/product?id=${product.id}`} className={`flex items-center gap-3 p-3 hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
                     <img src={`http://localhost:5000/uploads/${product.image}`} alt="" className="w-10 h-10 object-cover rounded" />
                     <div>
                       <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{product.product_name}</h4>

@@ -31,12 +31,21 @@ import cartIcon from "../assets/shopping-cart.png";
 import viewArrow from "../assets/right-arrow (1).png";
 const Home = () => {
   const [activeCategory, setActiveCategory] = useState(1);
-  const [activeReview, setActiveReview] = useState(3);
+  const [activeReview, setActiveReview] = useState(1);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [wishlist, setWishlist] = useState(() => {
     return JSON.parse(localStorage.getItem("wishlist")) || [];
   });
+  const getTestimonialImage = (img) => {
+    if (!img) return u1;
+    if (img === "u1.avif") return u1;
+    if (img === "u2.webp") return u2;
+    if (img === "u3.avif") return u3;
+    return `http://localhost:5000/uploads/${img}`;
+  };
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -58,8 +67,33 @@ const Home = () => {
         console.error("Error fetching products:", error);
       }
     };
+    const fetchBrands = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/brands");
+        if (response.data.success) {
+          setBrands(response.data.brands);
+        }
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      }
+    };
+    const fetchTestimonials = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/testimonials");
+        if (response.data.success) {
+          setTestimonials(response.data.testimonials);
+          if (response.data.testimonials.length > 0) {
+            setActiveReview(response.data.testimonials[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error);
+      }
+    };
     fetchCategories();
     fetchProducts();
+    fetchBrands();
+    fetchTestimonials();
   }, []);
 const featuredProducts = [
   {
@@ -119,32 +153,7 @@ const newArrivals = [
     price: "₹99,000",
   },
 ];
-const testimonials = [
-  {
-    id: 1,
-    image: u1,
-    name: "Sarah Jenkins",
-    role: "Interior Designer",
-    review:
-      "The quality of the home decor items surpassed my expectations. The minimalist aesthetic perfectly matches my studio.",
-  },
-  {
-    id: 2,
-    image: u2,
-    name: "Marcus Thorne",
-    role: "Tech Reviewer",
-    review:
-      "The Aura headphones are a game changer. Customer service was incredibly responsive when I had a shipping question.",
-  },
-  {
-  id: 3,
-  image: u3,
-  name: "Elena Rodriguez",
-  role: "Professional Photographer",
-  review: "Finding premium bags that are actually durable is tough. The voyager duffel is now my go-to for all location shoots.",
-},
-];
-const fetchedFeaturedProducts = products.filter((p) => p.is_featured).slice(0, 4).map((p) => ({
+const fetchedFeaturedProducts = products.slice(0, 4).map((p) => ({
   id: p.id,
   image: p.image ? `http://localhost:5000/uploads/${p.image}` : m1,
   category: p.category,
@@ -153,23 +162,20 @@ const fetchedFeaturedProducts = products.filter((p) => p.is_featured).slice(0, 4
   oldPrice: p.discount_price && p.discount_price > 0 ? `₹${Number(p.discount_price || 1299).toFixed(2)}` : "",
   discount: "",
   rating: p.rating,
+  description: p.description,
+  brand: p.brand,
 }));
 let displayFeatured = [...fetchedFeaturedProducts];
-if (displayFeatured.length < 4) {
-  const filler = featuredProducts.slice(0, 4 - displayFeatured.length).map(p => ({...p, id: `static-feat-${p.id}`}));
-  displayFeatured = [...displayFeatured, ...filler];
-}
 const fetchedNewArrivals = products.slice(0, 3).map((p) => ({
   id: p.id,
   image: p.image ? `http://localhost:5000/uploads/${p.image}` : k1,
   title: p.product_name,
   price: `₹${Number(p.base_price || 999).toFixed(2)}`,
+  description: p.description,
+  brand: p.brand,
+  category: p.category,
 }));
 let displayNewArrivals = [...fetchedNewArrivals];
-if (displayNewArrivals.length < 3) {
-  const filler = newArrivals.slice(0, 3 - displayNewArrivals.length).map(p => ({...p, id: `static-new-${p.id}`}));
-  displayNewArrivals = [...displayNewArrivals, ...filler];
-}
   return (
        <>
       <Navbar />
@@ -254,54 +260,15 @@ if (displayNewArrivals.length < 3) {
       </button>
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
-      {categories.map((item) => (
+      {brands.map((item) => (
         <div key={item.id}
-          onClick={() => window.location.href = "/product"}
-          className={`cursor-pointer rounded-2xl border p-6 transition-all duration-300 flex flex-col items-center text-center
-          ${
-            activeCategory === item.id
-              ? "bg-sky-500 text-white border-sky-500 shadow-lg"
-              : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-md"
-          }`} >
-          <div
-            className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 relative
-            ${
-              activeCategory === item.id
-                ? "bg-white"
-                : "bg-gray-100 dark:bg-gray-600"
-            }`}>
-            <img src={item.image ? `http://localhost:5000/uploads/${item.image}` : ""} alt={item.category_name}  className="w-8 h-8 object-contain" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const cart = JSON.parse(localStorage.getItem("cart")) || [];
-                cart.push({
-                  img: item.image ? `http://localhost:5000/uploads/${item.image}` : "",
-                  tag: "Category",
-                  title: item.category_name,
-                  price: "₹0",
-                });
-                localStorage.setItem("cart", JSON.stringify(cart));
-                window.location.href = "/cart";
-              }}
-              className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 rounded-full p-1.5 shadow hover:bg-gray-100 dark:hover:bg-gray-600 transition">
-              <img src={cartIcon} alt="" className="w-3.5 h-3.5 dark:invert" />
-            </button>
+          className="cursor-pointer rounded-2xl border p-6 transition-all duration-300 flex flex-col items-center text-center bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-md hover:scale-105" >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 relative bg-gray-100 dark:bg-gray-600">
+            <img src={item.image ? `http://localhost:5000/uploads/${item.image}` : ""} alt={item.brand_name} className="w-12 h-12 object-contain rounded-full" />
           </div>
-          <h3 className={`font-semibold ${   activeCategory === item.id
-                ? "text-white"
-                : "text-gray-900 dark:text-white"
-            }`}>
-            {item.category_name}
+          <h3 className="font-semibold text-gray-905 dark:text-white">
+            {item.brand_name}
           </h3>
-          <p
-            className={`text-sm mt-1 ${
-              activeCategory === item.id
-                ? "text-white/80"
-                : "text-gray-500 dark:text-gray-400"
-            }`} >
-            1,240 Products
-          </p>
         </div>
       ))}
     </div>
@@ -363,8 +330,11 @@ if (displayNewArrivals.length < 3) {
   </button>
 </div>
           <div className="p-4">
-            <p className="text-xs uppercase text-gray-400 dark:text-gray-300 mb-2">{product.category}</p>
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{product.title}</h3>
+            <p className="text-xs uppercase text-gray-400 dark:text-gray-300 mb-1">
+              {product.category || "Product"} {product.brand ? `• ${product.brand}` : ""}
+            </p>
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white leading-tight">{product.title}</h3>
+            {product.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{product.description}</p>}
             {product.rating && parseFloat(product.rating) > 0 ? (
               <div className="flex items-center gap-1 my-3">
                 {[1, 2, 3, 4, 5].map((s) => {
@@ -401,7 +371,7 @@ if (displayNewArrivals.length < 3) {
               <span className="text-sm text-gray-400 line-through">{product.oldPrice}</span>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => window.location.href = "/product"} className="flex-1 border border-gray-300 dark:border-gray-600 dark:text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition">Details</button>
+              <button onClick={() => window.location.href = "/product?id=" + product.id} className="flex-1 border border-gray-300 dark:border-gray-600 dark:text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition">Details</button>
               <button
                 onClick={() => {
                   const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -451,9 +421,13 @@ if (displayNewArrivals.length < 3) {
           className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 flex items-center gap-4 hover:shadow-lg transition">
           <img src={item.image} alt="" className="w-24 h-24 rounded-lg object-cover"/>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <p className="text-[10px] tracking-wider text-gray-500 uppercase mb-1">
+              {item.category || "Product"} {item.brand ? `• ${item.brand}` : ""}
+            </p>
+            <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
               {item.title}
             </h3>
+            {item.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
             <p className="text-blue-600 dark:text-blue-400 font-bold mt-1">
               {item.price}
             </p>
@@ -468,8 +442,7 @@ if (displayNewArrivals.length < 3) {
     localStorage.setItem("cart", JSON.stringify(cart));
     window.location.href = "/cart";
   }}
-  className="mt-3 w-full min-w-[170px] bg-[#8B6B4A] hover:bg-[#73563A] text-white py-3 px-4 rounded-md flex items-center justify-center gap-3 whitespace-nowrap transition-all duration-300"
->
+  className="mt-3 w-full min-w-[170px] bg-[#8B6B4A] hover:bg-[#73563A] text-white py-3 px-4 rounded-md flex items-center justify-center gap-3 whitespace-nowrap transition-all duration-300">
   <img src={shoppingCartIcon} alt="Cart" className="w-5 h-5 flex-shrink-0"/>
   <span className="text-base font-medium">
     Add to Cart
@@ -504,7 +477,7 @@ if (displayNewArrivals.length < 3) {
               "{item.review}"
             </p>
             <div className="flex items-center gap-3 mt-6">
-              <img src={item.image} alt=""
+              <img src={getTestimonialImage(item.image)} alt=""
                 className="w-12 h-12 rounded-full object-cover" />
               <div>
                 <h4 className="font-semibold dark:text-white">

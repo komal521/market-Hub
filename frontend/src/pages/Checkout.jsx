@@ -58,7 +58,8 @@ const Checkout = () => {
       title: item.title,
       image: item.img || item.image || "",
       price: item.price,
-      qty: item.quantity || 1
+      qty: item.quantity || 1,
+      variant: item.variant || ""
     })));
     try {
       const response = await fetch("http://localhost:5000/api/orders", {
@@ -214,6 +215,7 @@ const Checkout = () => {
                         <div>
                           <p className="font-bold text-sm text-gray-850 dark:text-white leading-snug">{item.title}</p>
                           <p className="text-xs text-gray-400 mt-1">{item.tag || item.subtitle || "Qty: 1"}</p>
+                          {item.variant && <p className="text-xs font-medium text-[#d9a63d] mt-0.5">{item.variant}</p>}
                         </div>
                       </div>
                       <span className="font-bold text-sm text-gray-800 dark:text-white tracking-tight">{item.price}</span>

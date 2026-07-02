@@ -167,7 +167,7 @@ const TimelessHeart = ({ item }) => {
     </button>
   );
 };
-const ProductCard = ({ id, img, tag, title, price, oldPrice, rating, showButton = false, variants }) => {
+const ProductCard = ({ id, img, tag, title, price, oldPrice, rating, showButton = false, variants, description, brand }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
 useEffect(() => {
   const syncWishlist = () => {
@@ -185,7 +185,6 @@ useEffect(() => {
   const navigate = useNavigate();
 const handleWishlist = (e) => {
   e.stopPropagation();
-
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) {
     alert("Please login to use wishlist");
@@ -220,11 +219,12 @@ const getWishlist = () => {
         <img src={img} alt={title}
           className="w-full h-[240px] sm:h-[260px] object-cover group-hover:scale-105 transition duration-500"/>
         <span className="absolute top-4 left-4 bg-white/90 dark:bg-gray-700 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-250 shadow pointer-events-none">
-          {tag}
+          {tag || "Product"} {brand ? `• ${brand}` : ""}
         </span>
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{title}</h3>
+        {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{description}</p>}
         {variants && (() => {
           try {
             const parsed = JSON.parse(variants);
@@ -327,23 +327,22 @@ const ProductPage = () => {
       if (data.success) {
         setProducts(data.products);
         if (data.products && data.products.length > 0) {
-          setHeroProduct(data.products[0]);
+          const urlParams = new URLSearchParams(window.location.search);
+          const productId = urlParams.get("id");
+          const foundProduct = productId ? data.products.find(p => p.id === parseInt(productId, 10)) : null;
+          setHeroProduct(foundProduct || data.products[0]);
         }
-        const featured = data.products.filter(p => p.is_featured).slice(0, 4);
-        const mappedFeatured = featured.map(p => ({
+        const mappedFeatured = data.products.slice(0, 4).map(p => ({
           img: p.image ? `http://localhost:5000/uploads/${p.image}` : c1,
           tag: p.category,
           title: p.product_name,
           price: `₹${p.base_price}`,
           oldPrice: p.discount_price > 0 ? `₹${p.discount_price}` : "",
-          rating: p.rating
+          rating: p.rating,
+          description: p.description,
+          brand: p.brand
         }));
-        if (mappedFeatured.length < 4) {
-          const filler = timelessProducts.slice(0, 4 - mappedFeatured.length);
-          setDynamicTimeless([...mappedFeatured, ...filler]);
-        } else {
-          setDynamicTimeless(mappedFeatured);
-        }
+        setDynamicTimeless(mappedFeatured);
       }
     })
     .catch((err) => console.log(err));
@@ -400,12 +399,22 @@ const ProductPage = () => {
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mt-4 leading-tight text-gray-900 dark:text-white">
                 {heroProduct?.product_name || "Mastery in Motion."}
               </h1>
-              <div className="flex items-center gap-1 mt-4 flex-wrap">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <img key={s} src={star} alt="" className="w-4 h-4" />
-                ))}
-                <span className="text-gray-500 dark:text-gray-400 ml-2 text-sm">(124 Reviews)</span>
-              </div>
+              {heroProduct?.rating && parseFloat(heroProduct.rating) > 0 ? (
+                <div className="flex items-center gap-1 mt-4 flex-wrap">
+                  {[1, 2, 3, 4, 5].map((s) => {
+                    const rVal = parseFloat(heroProduct.rating || "0");
+                    const isFilled = s <= Math.round(rVal);
+                    return (
+                      <img key={s} src={isFilled ? star : star1} alt="" className="w-4 h-4 object-contain" />
+                    );
+                  })}
+                  <span className="text-gray-500 dark:text-gray-400 ml-2 text-sm">({heroProduct.rating} Rating)</span>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <span className="text-gray-400 dark:text-gray-500 text-sm italic">not rating yet</span>
+                </div>
+              )}
               <p className="text-gray-600 dark:text-gray-305 mt-5 leading-7 text-sm sm:text-base">
                 {heroProduct?.description || "Experience premium craftsmanship with modern design. Built for style, durability and everyday comfort."}
               </p>
@@ -461,31 +470,75 @@ const ProductPage = () => {
               </div>
               <div className="mt-6 flex flex-col gap-2">
                 <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Quantity</span>
-                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 gap-5">
-                  <button onClick={() => qty > 1 && setQty(qty - 1)}>
-                    <img src={minus} alt="" className="w-3 dark:invert" />
+                <div className="w-28 flex items-center justify-between border border-gray-300 dark:border-gray-600 rounded-full px-3 py-1 gap-2">
+                  <button onClick={() => qty > 1 && setQty(qty - 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                    <img src={minus} alt="" className="w-2.5 dark:invert" />
                   </button>
-                  <span className="font-semibold w-5 text-center">{qty}</span>
-                  <button onClick={() => setQty(qty + 1)}>
-                    <img src={add} alt="" className="w-3 dark:invert" />
+                  <span className="font-semibold text-sm w-5 text-center">{qty}</span>
+                  <button onClick={() => setQty(qty + 1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition">
+                    <img src={add} alt="" className="w-2.5 dark:invert" />
                   </button>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <button 
                   onClick={() => {
+                    if (!heroProduct) return;
                     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-                    cart.push({ img: z2, tag: "New Collection", title: "Mastery in Motion", price: "₹41,297.00", variant: `${selectedCarat} / ${selectedColor} / Size ${selectedSize}` });
+                    let finalPrice = heroProduct.base_price || 0;
+                    let variantInfo = "";
+                    if (heroProduct.variants) {
+                      try {
+                        const parsed = JSON.parse(heroProduct.variants);
+                        const selectedVar = parsed[selectedVariantIndex];
+                        if (selectedVar) {
+                          if (selectedVar.price) finalPrice += Number(selectedVar.price);
+                          variantInfo = `${selectedVar.name || ""} ${selectedVar.size ? `Size: ${selectedVar.size}` : ""} ${selectedVar.colour ? `Color: ${selectedVar.colour}` : ""}`.trim();
+                        }
+                      } catch (e) {}
+                    }
+                    cart.push({
+                      id: heroProduct.id,
+                      img: heroProduct.image ? `http://localhost:5000/uploads/${heroProduct.image}` : z2,
+                      tag: heroProduct.category || "Product",
+                      title: heroProduct.product_name,
+                      price: `₹${finalPrice}`,
+                      quantity: qty,
+                      variant: variantInfo
+                    });
                     localStorage.setItem("cart", JSON.stringify(cart));
-                    window.location.href = "/cart"; }}
+                    window.location.href = "/cart";
+                  }}
                   className="flex-1 bg-white dark:bg-gray-800 border border-[#0b1b3d] dark:border-amber-500 text-[#0b1b3d] dark:text-amber-100 px-8 py-4 rounded-md font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300">
                   Add to cart
                 </button>
                 <button  onClick={() => {
+                    if (!heroProduct) return;
                     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-                    cart.push({ img: z2, tag: "New Collection", title: "Mastery in Motion", price: "₹41,297.00", variant: `${selectedCarat} / ${selectedColor} / Size ${selectedSize}` });
+                    let finalPrice = heroProduct.base_price || 0;
+                    let variantInfo = "";
+                    if (heroProduct.variants) {
+                      try {
+                        const parsed = JSON.parse(heroProduct.variants);
+                        const selectedVar = parsed[selectedVariantIndex];
+                        if (selectedVar) {
+                          if (selectedVar.price) finalPrice += Number(selectedVar.price);
+                          variantInfo = `${selectedVar.name || ""} ${selectedVar.size ? `Size: ${selectedVar.size}` : ""} ${selectedVar.colour ? `Color: ${selectedVar.colour}` : ""}`.trim();
+                        }
+                      } catch (e) {}
+                    }
+                    cart.push({
+                      id: heroProduct.id,
+                      img: heroProduct.image ? `http://localhost:5000/uploads/${heroProduct.image}` : z2,
+                      tag: heroProduct.category || "Product",
+                      title: heroProduct.product_name,
+                      price: `₹${finalPrice}`,
+                      quantity: qty,
+                      variant: variantInfo
+                    });
                     localStorage.setItem("cart", JSON.stringify(cart));
-                    window.location.href = "/cart";}}
+                    window.location.href = "/cart";
+                  }}
                   className="flex-1 bg-[#0b1b3d] dark:bg-amber-600 text-white px-8 py-4 rounded-md font-semibold transition-all hover:bg-opacity-90 dark:hover:bg-amber-700">
                   Buy it now
                 </button>
@@ -528,6 +581,8 @@ const ProductPage = () => {
      oldPrice={`₹${item.discount_price}`}
      rating={item.rating}
      variants={item.variants}
+     description={item.description}
+     brand={item.brand}
      showButton={true}  />))}
           </div>
              <div className="flex justify-center mt-8 sm:hidden">
@@ -561,11 +616,12 @@ const ProductPage = () => {
                     <img src={item.img} alt={item.title}
                       className="w-full h-[200px] sm:h-[220px] object-cover group-hover:scale-105 transition duration-500"/>
                     <span className="absolute top-3 left-3 bg-white/90 dark:bg-gray-700 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-gray-700 dark:text-gray-250 shadow pointer-events-none">
-                      {item.tag}
+                      {item.tag || "Product"} {item.brand ? `• ${item.brand}` : ""}
                     </span>
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{item.title}</h3>
+                    {item.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
                     <div className="flex items-center gap-1 mt-1">
                       {[1, 2, 3, 4, 5].map((s) => (
                         <img key={s} src={star1} alt="" className="w-3 h-3 object-contain" />
