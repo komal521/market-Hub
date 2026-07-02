@@ -224,7 +224,7 @@ const getWishlist = () => {
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{title}</h3>
-        {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{description}</p>}
+        {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">{description}</p>}
         {variants && (() => {
           try {
             const parsed = JSON.parse(variants);
@@ -320,6 +320,10 @@ const ProductPage = () => {
   const [products, setProducts] = useState([]);
   const [dynamicTimeless, setDynamicTimeless] = useState([]);
   const [isMainWishlisted, setIsMainWishlisted] = useState(false);
+  // Newsletter states
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState(null); // null | 'loading' | 'success' | 'error' | 'already'
+  const [newsletterMsg, setNewsletterMsg] = useState("");
   useEffect(() => {
   fetch("http://localhost:5000/api/products")
     .then((res) => res.json())
@@ -347,6 +351,37 @@ const ProductPage = () => {
     })
     .catch((err) => console.log(err));
 }, []);
+
+  // Newsletter subscribe handler
+  const handleNewsletterSubscribe = async () => {
+    if (!newsletterEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail)) {
+      setNewsletterStatus("error");
+      setNewsletterMsg("Please enter a valid email address.");
+      return;
+    }
+    setNewsletterStatus("loading");
+    try {
+      const res = await fetch("http://localhost:5000/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail })
+      });
+      const data = await res.json();
+      if (res.status === 201 && data.success) {
+        setNewsletterStatus("success");
+        setNewsletterMsg(data.message || "Successfully subscribed!");
+        setNewsletterEmail("");
+      } else {
+        setNewsletterStatus("already");
+        setNewsletterMsg(data.message || "Already subscribed!");
+      }
+    } catch (err) {
+      setNewsletterStatus("error");
+      setNewsletterMsg("Something went wrong. Please try again.");
+    }
+    // Clear message after 4 seconds
+    setTimeout(() => { setNewsletterStatus(null); setNewsletterMsg(""); }, 4000);
+  };
   return (
     <>
       <Navbar />
@@ -376,7 +411,7 @@ const ProductPage = () => {
                   } catch (err) {
                     console.error(err); }  }}  />
               <img src={heroProduct?.image ? `http://localhost:5000/uploads/${heroProduct.image}` : z2} alt="Product"
-                className="w-full rounded-[30px] shadow-xl object-cover max-h-[480px] lg:max-h-none" />
+                className="w-full rounded-[30px] shadow-xl object-contain bg-gray-50 dark:bg-gray-800" style={{maxHeight: '520px', minHeight: '320px'}} />
               {heroProduct && heroProduct.tags && (
                 <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
                   {(() => {
@@ -676,9 +711,15 @@ const ProductPage = () => {
           ? "bg-[#6f4e37] text-white"
           : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:shadow-md"  }`} >
       <div className="flex gap-1 mb-3">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <img key={s}  src={star1}  alt=""
-            className="w-4 h-4 object-contain" />  ))}
+        {[1, 2, 3, 4, 5].map((s) => {
+          const rVal = 4.5; // static reviews are all 4.5+
+          return (
+            <svg key={s} className={`w-4 h-4 ${ s <= Math.round(rVal) ? 'text-amber-400' : 'text-gray-300'}`}
+              fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          );
+        })}
       </div>
       <p  className={`italic leading-relaxed text-xs ${
         activeReview === i
@@ -724,12 +765,37 @@ const ProductPage = () => {
                 and artisan stories.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
-                <input type="email" placeholder="Enter your email address"
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNewsletterSubscribe()}
                   className="flex-1 rounded-full px-5 py-3 text-sm outline-none border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:bg-white/20 transition" />
-                <button className="bg-white hover:bg-[#6f4e37] text-black font-bold px-6 py-3 rounded-full text-sm transition-all hover:scale-105 whitespace-nowrap">
-                  Subscribe Now
+                <button
+                  onClick={handleNewsletterSubscribe}
+                  disabled={newsletterStatus === 'loading'}
+                  className={`font-bold px-6 py-3 rounded-full text-sm transition-all whitespace-nowrap ${
+                    newsletterStatus === 'loading'
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-white hover:bg-[#6f4e37] hover:text-white text-black hover:scale-105'
+                  }`}>
+                  {newsletterStatus === 'loading' ? 'Subscribing...' : 'Subscribe Now'}
                 </button>
               </div>
+              {/* Feedback Message */}
+              {newsletterStatus && newsletterStatus !== 'loading' && (
+                <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium animate-pulse ${
+                  newsletterStatus === 'success'
+                    ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                    : newsletterStatus === 'already'
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/40'
+                }`}>
+                  <span>{newsletterStatus === 'success' ? '✅' : newsletterStatus === 'already' ? 'ℹ️' : '❌'}</span>
+                  {newsletterMsg}
+                </div>
+              )}
               <p className="text-gray-400 text-xs mt-5 uppercase tracking-wider">
                 *By subscribing you agree to our Privacy Policy and Terms of Service.
               </p>

@@ -66,7 +66,7 @@ const SelectInput = ({
         className={`h-12 w-full appearance-none rounded-2xl border pl-12 pr-11 text-sm outline-none ${fieldClass}`} >
         <option value="">{placeholder}</option>
         {options.map((option) => (
-          <option key={option}>{option}</option>
+          <option key={option} value={option}>{option}</option>
         ))}
       </select>
       <img  src={downIcon}  alt=""
@@ -74,6 +74,41 @@ const SelectInput = ({
     </div>
   </div>
 );
+
+// Real brands list
+const REAL_BRANDS = [
+  "Apple", "Samsung", "Nike", "Adidas", "Puma", "Reebok",
+  "Rolex", "Titan", "Fossil", "Casio", "Seiko", "Omega",
+  "Gucci", "Louis Vuitton", "Prada", "Versace", "Armani", "Zara", "H&M",
+  "Levi's", "Tommy Hilfiger", "Ralph Lauren", "Calvin Klein", "Burberry",
+  "Sony", "Bose", "boAt", "JBL", "Sennheiser", "Beats",
+  "Dell", "HP", "Lenovo", "Asus", "Acer", "Microsoft",
+  "Tanishq", "Malabar Gold", "Kalyan Jewellers", "PC Jeweller",
+  "Forest Essentials", "Nykaa", "Mamaearth", "Biotique",
+  "Ray-Ban", "Oakley", "Carrera", "Fastrack"
+];
+
+// Real categories with sub-categories
+const CATEGORY_MAP = {
+  "Electronics": ["Smartphones", "Laptops", "Headphones", "Earbuds", "Smartwatches", "Tablets", "Cameras", "Accessories"],
+  "Fashion": ["Men's Clothing", "Women's Clothing", "Kids Clothing", "Ethnic Wear", "Activewear", "Swimwear"],
+  "Footwear": ["Sneakers", "Formal Shoes", "Sandals", "Heels", "Boots", "Loafers", "Sports Shoes"],
+  "Watches": ["Analog Watches", "Digital Watches", "Smartwatches", "Luxury Watches", "Sports Watches"],
+  "Handbags & Bags": ["Tote Bags", "Crossbody Bags", "Backpacks", "Clutches", "Travel Bags", "Laptop Bags"],
+  "Jewellery": ["Rings", "Necklaces", "Bracelets", "Earrings", "Anklets", "Pendants"],
+  "Fragrances": ["Perfumes", "Deodorants", "Body Mists", "Attar"],
+  "Accessories": ["Sunglasses", "Belts", "Wallets", "Scarves", "Hats", "Ties"],
+  "Home & Living": ["Decor", "Bedding", "Kitchen", "Lighting", "Storage"],
+  "Sports & Fitness": ["Gym Equipment", "Yoga", "Outdoor Sports", "Cycling", "Swimming"]
+};
+
+// Size presets by category type
+const SIZE_PRESETS = {
+  clothing: ["XS", "S", "M", "L", "XL", "XXL", "3XL"],
+  footwear: ["5", "6", "7", "8", "9", "10", "11", "12"],
+  ring: ["5", "6", "7", "8", "9", "10", "11", "12"],
+  free: ["Free Size"]
+};
 const SectionHeader = ({ icon, title, desc, darkMode = false }) => (
   <div className="mb-5 flex items-center gap-3 border-b border-gray-200 pb-4">
     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eef2ff]">
@@ -186,16 +221,71 @@ const AddProduct = ({ darkMode, onBack, product }) => {
             </div>
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <TextInput  label="SKU / Product ID"  name="sku" icon={boxIcon}  placeholder="AUR-2024-MS-001" defaultValue={product?.sku} />
-              <TextInput label="Brand Name"  name="brand" icon={cateIcon} placeholder="e.g. Aurelian Luxe"
-                defaultValue={product?.brand} />
+              <div>
+                <label className={`mb-2 block text-sm font-semibold ${labelClass}`}>Brand Name</label>
+                <div className="relative">
+                  <InputIcon icon={cateIcon} />
+                  <input
+                    type="text"
+                    name="brand"
+                    list="brandsList"
+                    placeholder="e.g. Nike, Apple, Rolex..."
+                    defaultValue={product?.brand}
+                    className={`h-12 w-full rounded-2xl border pl-12 pr-4 text-sm outline-none ${fieldClass}`}
+                  />
+                  <datalist id="brandsList">
+                    {REAL_BRANDS.map(b => <option key={b} value={b} />)}
+                  </datalist>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <SelectInput  label="Category" name="category" icon={cateIcon} placeholder="Select Category"
-                options={["Electronics", "Accessories", "Fashion", "Home"]}
-                defaultValue={product?.category} />
-              <SelectInput label="Sub-Category" name="subCategory" icon={cateIcon}
-                placeholder="Select Sub-Category"  options={["Luxury", "Premium", "Classic", "New Arrival"]}
-                defaultValue={product?.sub_category} />
+              <div>
+                <label className={`mb-2 block text-sm font-semibold ${labelClass}`}>Category</label>
+                <div className="relative">
+                  <InputIcon icon={cateIcon} />
+                  <select
+                    name="category"
+                    defaultValue={product?.category}
+                    className={`h-12 w-full appearance-none rounded-2xl border pl-12 pr-11 text-sm outline-none ${fieldClass}`}
+                    onChange={(e) => {
+                      const subSel = document.getElementById('subCategorySelect');
+                      if (subSel) {
+                        const subs = CATEGORY_MAP[e.target.value] || [];
+                        subSel.innerHTML = '<option value="">Select Sub-Category</option>' +
+                          subs.map(s => `<option value="${s}">${s}</option>`).join('');
+                      }
+                    }}>
+                    <option value="">Select Category</option>
+                    {Object.keys(CATEGORY_MAP).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <img src={downIcon} alt="" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-70" />
+                </div>
+              </div>
+              <div>
+                <label className={`mb-2 block text-sm font-semibold ${labelClass}`}>Sub-Category</label>
+                <div className="relative">
+                  <InputIcon icon={cateIcon} />
+                  <select
+                    id="subCategorySelect"
+                    name="subCategory"
+                    defaultValue={product?.sub_category}
+                    className={`h-12 w-full appearance-none rounded-2xl border pl-12 pr-11 text-sm outline-none ${fieldClass}`}>
+                    <option value="">Select Sub-Category</option>
+                    {product?.category && CATEGORY_MAP[product.category]
+                      ? CATEGORY_MAP[product.category].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))
+                      : Object.values(CATEGORY_MAP).flat().map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))
+                    }
+                  </select>
+                  <img src={downIcon} alt="" className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-70" />
+                </div>
+              </div>
             </div>
             <div className="pt-2">
               <SectionHeader icon={camraIcon} title="Media & Gallery" />
@@ -348,29 +438,88 @@ const AddProduct = ({ darkMode, onBack, product }) => {
                 </table>
               </div>
               {showVariantForm ? (
-                <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  <div className="flex flex-col">
-                    <label className="text-xs font-bold text-gray-700 mb-1">Name (e.g. 18kt)</label>
-                    <input type="text" className={`p-2 rounded border ${fieldClass}`} value={newVariant.name} onChange={(e) => setNewVariant({...newVariant, name: e.target.value})} placeholder="Variant Name" />
+                <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Variant Name */}
+                    <div className="flex flex-col">
+                      <label className="text-xs font-bold text-gray-700 mb-1">Variant Name (e.g. 18kt Gold)</label>
+                      <input type="text" className={`p-2 rounded-xl border ${fieldClass}`} value={newVariant.name} onChange={(e) => setNewVariant({...newVariant, name: e.target.value})} placeholder="e.g. 18kt, Large, Midnight Black" />
+                    </div>
+                    {/* Additional Price */}
+                    <div className="flex flex-col">
+                      <label className="text-xs font-bold text-gray-700 mb-1">Additional Price (₹)</label>
+                      <input type="number" className={`p-2 rounded-xl border ${fieldClass}`} value={newVariant.price} onChange={(e) => setNewVariant({...newVariant, price: e.target.value})} placeholder="0.00" />
+                    </div>
                   </div>
+                  {/* Colour with Color Picker */}
                   <div className="flex flex-col">
-                    <label className="text-xs font-bold text-gray-700 mb-1">Colour (e.g. Gold)</label>
-                    <input type="text" className={`p-2 rounded border ${fieldClass}`} value={newVariant.colour} onChange={(e) => setNewVariant({...newVariant, colour: e.target.value})} placeholder="Color name or hex" />
+                    <label className="text-xs font-bold text-gray-700 mb-1">Colour</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        className="h-10 w-12 rounded-lg border border-gray-200 cursor-pointer p-0.5"
+                        value={newVariant.colour && newVariant.colour.startsWith('#') ? newVariant.colour : '#6f4e37'}
+                        onChange={(e) => setNewVariant({...newVariant, colour: e.target.value})}
+                        title="Pick color" />
+                      <input
+                        type="text"
+                        className={`p-2 rounded-xl border flex-1 ${fieldClass}`}
+                        value={newVariant.colour}
+                        onChange={(e) => setNewVariant({...newVariant, colour: e.target.value})}
+                        placeholder="e.g. Gold, #d4af37, Navy Blue" />
+                    </div>
+                    {/* Quick color presets */}
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {[['#000000','Black'],['#FFFFFF','White'],['#d4af37','Gold'],['#C0C0C0','Silver'],['#8B4513','Brown'],['#1a237e','Navy'],['#c62828','Red'],['#2e7d32','Green'],['#e91e63','Pink'],['#ff6f00','Orange']].map(([hex, name]) => (
+                        <button key={hex} type="button"
+                          onClick={() => setNewVariant({...newVariant, colour: hex})}
+                          title={name}
+                          style={{backgroundColor: hex}}
+                          className="w-6 h-6 rounded-full border-2 border-gray-300 hover:scale-125 transition-transform" />
+                      ))}
+                    </div>
                   </div>
+                  {/* Size with Presets */}
                   <div className="flex flex-col">
-                    <label className="text-xs font-bold text-gray-700 mb-1">Size (e.g. 7)</label>
-                    <input type="text" className={`p-2 rounded border ${fieldClass}`} value={newVariant.size} onChange={(e) => setNewVariant({...newVariant, size: e.target.value})} placeholder="Ring size / Dimension" />
+                    <label className="text-xs font-bold text-gray-700 mb-2">Size</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {/* Clothing sizes */}
+                      <span className="text-xs text-gray-400 font-semibold self-center">Clothing:</span>
+                      {SIZE_PRESETS.clothing.map(s => (
+                        <button key={s} type="button"
+                          onClick={() => setNewVariant({...newVariant, size: s})}
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+                            newVariant.size === s
+                              ? 'bg-[#d9a63d] text-white border-[#d9a63d]'
+                              : 'border-gray-300 text-gray-600 hover:border-[#d9a63d]'
+                          }`}>{s}</button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="text-xs text-gray-400 font-semibold self-center">Footwear:</span>
+                      {SIZE_PRESETS.footwear.map(s => (
+                        <button key={`f-${s}`} type="button"
+                          onClick={() => setNewVariant({...newVariant, size: s})}
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+                            newVariant.size === s
+                              ? 'bg-[#d9a63d] text-white border-[#d9a63d]'
+                              : 'border-gray-300 text-gray-600 hover:border-[#d9a63d]'
+                          }`}>{s}</button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      className={`p-2 rounded-xl border ${fieldClass}`}
+                      value={newVariant.size}
+                      onChange={(e) => setNewVariant({...newVariant, size: e.target.value})}
+                      placeholder="Or type custom size (e.g. 7, XL, 32W×30L)" />
                   </div>
-                  <div className="flex flex-col">
-                    <label className="text-xs font-bold text-gray-700 mb-1">Additional Price</label>
-                    <input type="number" className={`p-2 rounded border ${fieldClass}`} value={newVariant.price} onChange={(e) => setNewVariant({...newVariant, price: e.target.value})} placeholder="0.00" />
-                  </div>
-                  <div className="sm:col-span-4 flex justify-end gap-2 mt-2">
+                  <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setShowVariantForm(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-black">Cancel</button>
                     <button type="button" onClick={() => {
                       if(newVariant.name || newVariant.colour || newVariant.size) {
                         setVariants([...variants, newVariant]);
-                        setNewVariant({ name: "", colour: "", size: "", price: "" });
+                        setNewVariant({ name: '', colour: '', size: '', price: '' });
                         setShowVariantForm(false);
                       }
                     }} className="px-4 py-2 bg-[#d9a63d] text-white text-sm font-bold rounded-lg hover:bg-yellow-600">Save Variant</button>

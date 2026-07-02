@@ -1723,6 +1723,86 @@ app.get("/api/revenue-graph", (req, res) => {
   });
 });
 
+// ─── Newsletter Subscribe API ───────────────────────────────────────────────
+app.post("/api/newsletter/subscribe", (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ success: false, message: "Valid email required" });
+  }
+  // Create table if not exists
+  db.query(
+    `CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    (createErr) => {
+      if (createErr) {
+        console.log("Newsletter table error:", createErr);
+        return res.status(500).json({ success: false, message: "Server error" });
+      }
+      // Check if already subscribed
+      db.query("SELECT id FROM newsletter_subscribers WHERE email = ?", [email], (checkErr, existing) => {
+        if (checkErr) return res.status(500).json({ success: false, message: "Server error" });
+        if (existing && existing.length > 0) {
+          return res.status(200).json({ success: false, message: "You are already subscribed!" });
+        }
+        db.query("INSERT INTO newsletter_subscribers (email) VALUES (?)", [email], (insertErr) => {
+          if (insertErr) return res.status(500).json({ success: false, message: "Subscription failed" });
+          res.status(201).json({ success: true, message: "Successfully subscribed to Inner Circle!" });
+        });
+      });
+    }
+  );
+});
+
+// ─── Notifications API (recent orders + enquiries) ───────────────────────────
+app.get("/api/notifications", (req, res) => {
+  const ordersSql = `
+    SELECT id, customer_name, total_amount, status, created_at, 'order' as type
+    FROM orders
+    WHERE status = 'Pending'
+    ORDER BY created_at DESC
+    LIMIT 5`;
+  const enquiriesSql = `
+    SELECT id, name, email, subject, created_at, 'enquiry' as type
+    FROM enquiries
+    ORDER BY created_at DESC
+    LIMIT 5`;
+
+  db.query(ordersSql, (ordErr, orders) => {
+    if (ordErr) {
+      // orders table might not exist or differ
+      orders = [];
+    }
+    db.query(enquiriesSql, (enqErr, enquiries) => {
+      if (enqErr) {
+        enquiries = [];
+      }
+      const notifications = [
+        ...(orders || []).map(o => ({
+          id: `order-${o.id}`,
+          type: "order",
+          title: `New Order #${o.id}`,
+          message: `${o.customer_name} placed ₹${o.total_amount} order`,
+          time: o.created_at,
+          status: o.status
+        })),
+        ...(enquiries || []).map(e => ({
+          id: `enq-${e.id}`,
+          type: "enquiry",
+          title: `Enquiry: ${e.subject || "New Message"}`,
+          message: `From ${e.name} (${e.email})`,
+          time: e.created_at,
+          status: "New"
+        }))
+      ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+
+      res.status(200).json({ success: true, notifications, count: notifications.length });
+    });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server Running On Port ${PORT}`);
 });
