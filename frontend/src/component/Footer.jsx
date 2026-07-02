@@ -74,7 +74,7 @@ const Footer = () => {
           </div>
           <div>
             <h3 className="text-xl font-semibold mb-5 text-black">
-              Categories
+              Complimentary
             </h3>
             <ul className="space-y-3 text-white">
               <li onClick={() => navigate("/categories")}

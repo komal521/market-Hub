@@ -204,11 +204,7 @@ const Navbar = ({ setOpen, darkMode, setDarkMode, setActive }) => {
           )}
         </div>
 
-        {/* Message Icon */}
-        <button className={`hidden sm:flex p-2 rounded-full transition-all duration-300 ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-          title="Messages">
-          <img src={messageIcon} alt="message" className="w-5 h-5 object-contain" />
-        </button>
+
 
         {/* Admin Profile */}
         <div onClick={() => setActive && setActive("Profile")}

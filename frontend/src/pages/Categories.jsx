@@ -1,361 +1,329 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import cloths from "../assets/cloths.jpeg";
 import filterIcon from "../assets/filter.png";
 import downArrow from "../assets/down-arrow.png";
-import k3 from "../assets/k3.webp";
-import purse from "../assets/purse.webp";
-import c2 from "../assets/c2.webp";
-import bag from "../assets/bag.webp";
-import earrings from "../assets/earrings.webp";
-import shoes from "../assets/shoes.webp";
-import heart from "../assets/heart (1).png";
-import star from "../assets/star (1).png";
-import cart from "../assets/shopping-cart.png";
-import b1 from "../assets/b1.webp";
-import b3 from "../assets/b3.webp";
-import c3 from "../assets/c3.avif";
-import bagIcon from "../assets/bag.png";
-import watchIcon from "../assets/wristwatch.png";
-import laptopIcon from "../assets/laptop.png";
-import rightArrow from "../assets/right-arrow (1).png";
-const Categories =() =>{
-  const [categories,setCategories] = useState([]);
-  const [brandsList, setBrandsList] = useState([]);
-  const [products, setProducts] = useState([]);
+
+const Categories = () => {
+  const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [searchText, setSearchText] = useState("");
   const [activePage, setActivePage] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [maxPriceFilter, setMaxPriceFilter] = useState(200000);
-  const [wishlistedIds, setWishlistedIds] = useState({});
-  const [colorsList, setColorsList] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
+  const ITEMS_PER_PAGE = 12;
+
   useEffect(() => {
     fetchCategories();
-    fetchBrands();
-    fetchColors();
   }, []);
+
   useEffect(() => {
-    fetchProducts();
-  }, [selectedCategories, selectedBrands, maxPriceFilter]);
-  useEffect(() => {
-    const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    const ids = {};
-    wishlist.forEach((item) => {
-      if (item && item.id) {
-        ids[item.id] = true;
-      } else if (item && item.name) {
-        const match = products.find(p => p.product_name === item.name);
-        if (match) ids[match.id] = true;
-      }
-    });
-    setWishlistedIds(ids);
-  }, [products]);
+    let filtered = [...categories];
+    // Filter by status
+    if (selectedStatus !== "All") {
+      filtered = filtered.filter(c => c.status === selectedStatus);
+    }
+    // Filter by search
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      filtered = filtered.filter(c =>
+        c.category_name?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q) ||
+        c.parent_category?.toLowerCase().includes(q)
+      );
+    }
+    setFilteredCategories(filtered);
+    setActivePage(1);
+  }, [categories, selectedStatus, searchText]);
+
   const fetchCategories = async () => {
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/categories"
-      );
+      const res = await fetch("http://localhost:5000/api/categories");
       const data = await res.json();
-      console.log("API Response:", data);
       setCategories(
-        Array.isArray(data)
-          ? data
-          : data.categories || []
+        Array.isArray(data) ? data : data.categories || []
       );
     } catch (error) {
       console.log("Error fetching categories", error);
     }
   };
-  const fetchBrands = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/brands");
-      const data = await response.json();
-      if (data.success) {
-        setBrandsList(data.brands.map(b => b.brand_name));
-      }
-    } catch (error) {
-      console.log("Error fetching brands", error);
-    }
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
+  const paginatedCategories = filteredCategories.slice(
+    (activePage - 1) * ITEMS_PER_PAGE,
+    activePage * ITEMS_PER_PAGE
+  );
+
+  const statusOptions = ["All", "Active", "Trending", "Hidden"];
+
+  // Generate a gradient background for categories without images
+  const getCategoryGradient = (index) => {
+    const gradients = [
+      "from-amber-500 to-orange-600",
+      "from-emerald-500 to-teal-600",
+      "from-blue-500 to-indigo-600",
+      "from-purple-500 to-pink-600",
+      "from-rose-500 to-red-600",
+      "from-cyan-500 to-blue-600",
+      "from-yellow-500 to-amber-600",
+      "from-green-500 to-emerald-600",
+      "from-violet-500 to-purple-600",
+      "from-fuchsia-500 to-pink-600",
+    ];
+    return gradients[index % gradients.length];
   };
-  const fetchColors = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/colors");
-      const data = await response.json();
-      if (data.success) {
-        setColorsList(data.colors || []);
-      }
-    } catch (error) {
-      console.log("Error fetching colors", error);
-    }
+
+  // Get category icon based on name
+  const getCategoryIcon = (name) => {
+    const n = (name || "").toLowerCase();
+    if (n.includes("electron") || n.includes("laptop") || n.includes("phone")) return "💻";
+    if (n.includes("fashion") || n.includes("cloth")) return "👗";
+    if (n.includes("watch")) return "⌚";
+    if (n.includes("shoe") || n.includes("foot")) return "👟";
+    if (n.includes("bag") || n.includes("handbag")) return "👜";
+    if (n.includes("jewel") || n.includes("ring")) return "💍";
+    if (n.includes("fragran") || n.includes("perfum")) return "🌸";
+    if (n.includes("accessor")) return "🕶️";
+    if (n.includes("home") || n.includes("decor")) return "🏠";
+    if (n.includes("sport") || n.includes("fitness")) return "⚽";
+    if (n.includes("book")) return "📚";
+    if (n.includes("food") || n.includes("grocery")) return "🍎";
+    return "📦";
   };
-  const fetchProducts = async () => {
-    try {
-      const queryParams = new URLSearchParams();
-      queryParams.append("minPrice", 0);
-      queryParams.append("maxPrice", maxPriceFilter);
-      if (selectedBrands.length > 0) {
-        queryParams.append("brands", selectedBrands.join(","));
-      }
-      if (selectedCategories.length > 0) {
-        queryParams.append("categories", selectedCategories.join(","));
-      }
-      const res = await fetch(`http://localhost:5000/api/products?${queryParams.toString()}`);
-      const data = await res.json();
-      if (data.success) {
-        setProducts(data.products || []);
-      }
-    } catch (error) {
-      console.log("Error fetching products:", error);
-    }
-  };
-  const handleBrandChange = (brandName) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brandName) ? prev.filter((b) => b !== brandName) : [...prev, brandName]
-    );
-  };
-  const handleCategoryChange = (catName) => {
-    setSelectedCategories((prev) =>
-      prev.includes(catName) ? prev.filter((c) => c !== catName) : [...prev, catName]
-    );
-  };
-  const handleClearAll = () => {
-    setSelectedCategories([]);
-    setSelectedBrands([]);
-    setMaxPriceFilter(200000);
-  };
-  const handleWishlist = (e, item) => {
-    e.stopPropagation();
-    const wishlist =
-      JSON.parse(localStorage.getItem("wishlist")) || [];
-    const exists = wishlist.find(
-      (p) => p.id === item.id || p.name === item.product_name
-    );
-    if (exists) {
-      const updatedWishlist = wishlist.filter(
-        (p) => p.id !== item.id && p.name !== item.product_name
-      );
-      localStorage.setItem(
-        "wishlist",
-        JSON.stringify(updatedWishlist)
-      );
-      setWishlistedIds((prev) => ({
-        ...prev,
-        [item.id]: false,
-      })); } else {
-      const newItem = {
-        id: item.id,
-        image: item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`,
-        name: item.product_name,
-        category: item.category || "Product",
-        price: `₹${Number(item.base_price || 0).toLocaleString()}`,
-      };
-      localStorage.setItem(
-        "wishlist",
-        JSON.stringify([...wishlist, newItem])
-      );
-      setWishlistedIds((prev) => ({
-        ...prev,
-        [item.id]: true,
-      })); }
-    window.dispatchEvent(
-      new Event("wishlistUpdated") );};
-  return(
+
+  return (
     <>
-    <Navbar/>
-    <div className ="bg-[#f5f5fa] dark:bg-gray-900 min-h-screen py-8 px-4 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto">
-        <div className="relative overflow-hidden rounded-3xl h-[220px] md:h-[320px]">
-          <img src= {cloths}alt="Luxury Collection" className="w-full h-full object-cover"/>
-          <div className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 text-white max-w-md">
-            <span className="bg-white text-black top-7 px-3 py-1 rounded-full text-xs font-semibold">   Curated Selection</span>
-            <h1 className="mt-3 text-3xl md:text-6xl font-bold leading-none text-white"> Luxury <br/>
-            <span className="text-black italic dark:text-amber-100">  Essentials</span></h1>
-            <p className="mt-3 text-sm  md:text-base"> Explore our artisan-crafted collection designed
-                  for the modern lifestyle.</p>
-            <div className="flex gap-3 mt-4">
-              <button className="bg-[#6f4e37] hover:bg-[#5a3d2b] text-white px-4 py-2 rounded-lg font-medium">  Explore All</button>
-              <button className= "bg-white/90 text-gray-700 px-4 py-2 rounded-lg font-medium">View Lookbook</button>
+      <Navbar />
+      <div className="bg-[#f5f5fa] dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-300">
+        {/* Hero Banner */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8">
+          <div className="relative overflow-hidden rounded-3xl h-[200px] md:h-[280px]">
+            <img src={cloths} alt="Categories" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20" />
+            <div className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 text-white max-w-md">
+              <span className="bg-white text-black px-3 py-1 rounded-full text-xs font-semibold">
+                Browse Categories
+              </span>
+              <h1 className="mt-3 text-3xl md:text-5xl font-bold leading-tight">
+                Shop by{" "}
+                <span className="italic text-amber-300">Category</span>
+              </h1>
+              <p className="mt-2 text-sm md:text-base text-gray-200">
+                Explore curated collections organized for your shopping convenience.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 mt-8 pb-12">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Sidebar Filters */}
+            <div className="w-full lg:w-64 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border dark:border-gray-700 h-fit lg:sticky lg:top-24">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <img src={filterIcon} alt="" className="w-4 h-4 dark:invert" />
+                  <h3 className="font-semibold dark:text-white">Filter</h3>
+                </div>
+                <button
+                  onClick={() => { setSelectedStatus("All"); setSearchText(""); }}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition"
+                >
+                  Clear All
+                </button>
+              </div>
+
+              {/* Search Categories */}
+              <div className="mb-5">
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block">Search</label>
+                <input
+                  type="text"
+                  placeholder="Search categories..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-[#6f4e37] dark:text-white transition"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="border-b dark:border-gray-700 pb-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold dark:text-white">Status</h4>
+                  <img src={downArrow} alt="" className="w-3 h-3 dark:invert" />
+                </div>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  {statusOptions.map((status) => (
+                    <label key={status} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="statusFilter"
+                        checked={selectedStatus === status}
+                        onChange={() => setSelectedStatus(status)}
+                        className="accent-[#6f4e37]"
+                      />
+                      {status}
+                      <span className="ml-auto text-xs text-gray-400">
+                        {status === "All"
+                          ? categories.length
+                          : categories.filter(c => c.status === status).length}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary Box */}
+              <div className="bg-[#6f4e37] border border-black rounded-2xl p-4">
+                <h4 className="text-black font-semibold mb-2">Browse All</h4>
+                <p className="text-xs text-white mb-4">
+                  {categories.length} categories available. Click any category to explore products.
+                </p>
+                <Link to="/services" className="bg-white text-black px-4 py-2 rounded-full text-xs font-medium inline-block hover:bg-gray-100 transition">
+                  View All Products
+                </Link>
+              </div>
+            </div>
+
+            {/* Main Categories Grid */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {paginatedCategories.length} of {filteredCategories.length} categories
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">SORT BY</span>
+                  <button className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm flex items-center gap-2 bg-white dark:bg-gray-800">
+                    Latest Added
+                    <img src={downArrow} alt="" className="w-3 h-3 dark:invert" />
+                  </button>
+                </div>
+              </div>
+
+              {paginatedCategories.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="text-5xl mb-4">📂</div>
+                  <h3 className="text-xl font-bold text-gray-600 dark:text-gray-400">No categories found</h3>
+                  <p className="text-sm text-gray-400 mt-2">Add categories from the admin panel to see them here.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {paginatedCategories.map((cat, index) => (
+                    <Link
+                      key={cat.id}
+                      to={`/services?category=${encodeURIComponent(cat.category_name)}`}
+                      className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border dark:border-gray-700 group"
+                    >
+                      {/* Category Image or Gradient */}
+                      <div className="relative h-48 overflow-hidden">
+                        {cat.image ? (
+                          <img
+                            src={`http://localhost:5000/uploads/${cat.image}`}
+                            alt={cat.category_name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${getCategoryGradient(index)} flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
+                            <span className="text-6xl opacity-80">{getCategoryIcon(cat.category_name)}</span>
+                          </div>
+                        )}
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        {/* Status badge */}
+                        <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          cat.status === "Active" ? "bg-green-500/90 text-white" :
+                          cat.status === "Trending" ? "bg-amber-500/90 text-white" :
+                          "bg-gray-500/90 text-white"
+                        }`}>
+                          {cat.status || "Active"}
+                        </span>
+                        {/* Featured badge */}
+                        {cat.featured === 1 && (
+                          <span className="absolute top-3 right-3 bg-white/90 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold">
+                            ⭐ Featured
+                          </span>
+                        )}
+                        {/* Category name on image */}
+                        <div className="absolute bottom-3 left-4 right-4">
+                          <h3 className="text-white font-bold text-lg truncate drop-shadow-lg">
+                            {cat.category_name}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="p-4">
+                        {cat.parent_category && (
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                            Parent: {cat.parent_category}
+                          </p>
+                        )}
+                        {cat.description ? (
+                          <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                            {cat.description}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                            Explore {cat.category_name} collection
+                          </p>
+                        )}
+
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t dark:border-gray-700">
+                          <span className="text-xs font-medium text-[#6f4e37] dark:text-amber-300">
+                            Explore Collection →
+                          </span>
+                          {cat.slug && (
+                            <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
+                              {cat.slug}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-3 mt-10">
+                  <button
+                    onClick={() => setActivePage(p => Math.max(1, p - 1))}
+                    disabled={activePage === 1}
+                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 disabled:opacity-40"
+                  >
+                    Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setActivePage(page)}
+                      className={`w-10 h-10 rounded-lg transition ${
+                        activePage === page
+                          ? "bg-[#6f4e37] text-white shadow-lg"
+                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border dark:border-gray-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setActivePage(p => Math.min(totalPages, p + 1))}
+                    disabled={activePage === totalPages}
+                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-      <div className ="max-w-7xl mx-auto mt-8">
-              <div className="flex flex-col lg:flex-row gap-6">
-              <div className = "w-full lg:w-72 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border dark:border-gray-700">
-                <div className ="flex items-center justify-between  mb-6">
-                  <div className="flex items-center gap-2">
-                    <img src ={filterIcon} alt="" className="w-4 h-4 dark:invert"></img>
-                    <h3 className ="font-semibold dark:text-white">Filter By</h3>
-                  </div>
-                  <button onClick={handleClearAll} className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white">Clear All</button>
-                </div>
-                {/*Categories*/}
-                <div className ="border-b dark:border-gray-700 pb-4 mb-4">
-                  < div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm  font-bold dark:text-white">Categories</h4>
-                  <img src={downArrow} alt="" className="W-3 h-3 dark:invert"/>
-                  </div>
-               <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                {categories.map((item) => (
-               <label  key={item.id}
-               className="flex items-center gap-2 cursor-pointer" >
-                <input  type="checkbox"  checked={selectedCategories.includes(item.category_name)}
-                  onChange={() => handleCategoryChange(item.category_name)} className="accent-[#6f4e37]" />
-             {item.category_name}
-              </label> ))}
-                   </div>
-                       </div>
-                        <div className="border-b dark:border-gray-700 pb-4 mb-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <h4 className=" text-sm font-medium dark:text-white">Price Range</h4>
-                            <img src={downArrow} alt="" className="w-3 h-3 dark:invert"/>
-                          </div>
-                          <input   type="range"  min="0"  max="200000"  step="1000" value={maxPriceFilter}
-                            onChange={(e) => setMaxPriceFilter(Number(e.target.value))}
-                            className="w-full accent-[#6f4e37]" />
-                          <div className="flex gap-3 mt-4">
-                            <div>
-                              <p className="text-[10px] text-gray-600 dark:text-gray-400 mb-1"> MIN </p>
-                              <input type="text" value="₹0" readOnly 
-                              className="w-20 border dark:border-gray-600 rounded px-2 py-1 text-sm bg-gray-50 dark:bg-gray-700 dark:text-white"/>
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Max</p>
-                              <input type="text" value={`₹${maxPriceFilter.toLocaleString()}`} readOnly className="w-20 border dark:border-gray-600 rounded px-2 py-1 text-sm bg-gray-50 dark:bg-gray-700 dark:text-white"/>
-                            </div>
-                           </div>
-                            </div>
-                             {/* Featured Brands */}
-                            <div className="border-b dark:border-gray-700 pb-4 mb-4">
-                              <div className="flex items-center  justify-between mb-3">
-                                <h4 className="text-sm  font-semibold dark:text-white">Featured Brands</h4>
-                                <img src ={downArrow} alt="" className="w-3 h-3 dark:invert"/>
-                              </div>
-                              <div className="space-y-2 text-sm  text-gray-600 dark:text-gray-300">
-                                {brandsList.map((brand) => (
-                                  <label key={brand} className="flex items-center gap-2 cursor-pointer">
-                                    <input  type="checkbox"  checked={selectedBrands.includes(brand)}
-                                      onChange={() => handleBrandChange(brand)}
-                                      className="accent-[#6f4e37]" />
-                                    {brand}
-                                  </label> ))}
-                              </div>
-                            </div>
-                            <div className="border-b dark:border-gray-700 pb-4 mb-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-sm font-medium dark:text-white"> Colour Palette</h4>
-                                <img  src={downArrow} alt="" className=" w-3 h-3 dark:invert"/>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {colorsList.map((color) => (
-                                  <button key={color.id}
-                                    onClick={() => {
-                                      setSelectedColors((prev) =>
-                                        prev.includes(color.color_name) ? prev.filter(c => c !== color.color_name) : [...prev, color.color_name]
-                                      );
-                                    }}
-                                    className={`w-8 h-8 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                                      selectedColors.includes(color.color_name)
-                                        ? "border-[#6f4e37] ring-2 ring-[#6f4e37] ring-offset-1"
-                                        : "border-gray-200"
-                                    }`}
-                                    style={{ backgroundColor: color.hex_code || "#ccc" }}
-                                    title={color.color_name} />
-                                ))}
-                              </div>
-                            </div>
-                            <div  className=" bg-[#6f4e37] border border-black rounded-2xl p-4">
-                              <h4 className="text-black font-semibold mb-2"> Prive Membership</h4>
-                              <p className="text-xs text-white mb-4"> Join our inner circle for exclusive early access and bespoke concierge services.</p>
-                              <button className="bg-white text-black  px-4 py-2 rounded-full text-xs font-medium">Join Now</button>
-                            </div>
-                             </div>
-                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-6">
-                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                         Showing 1-{products.length} of {products.length} exquisite items
-                          </p>
-                <div className="flex items-center gap-2">
-                 <span className="text-xs text-gray-500">SORT BY</span>
-                       <button className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm flex items-center gap-2 bg-white dark:bg-gray-800">
-                     Most Coveted
-                     <img src={downArrow} alt="" className="w-3 h-3 dark:invert" />
-               </button>
-                 </div>
-                  </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.map((item) => (
-              <div key={item.id}
-  className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition border dark:border-gray-700">
-  <div className="relative">
-    <img src={item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`} alt={item.product_name}
-      className="w-full h-64 object-cover" />
-    <button onClick={(e) => handleWishlist(e, item)}
-      className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:scale-110 transition" >
-      <svg  className="w-4 h-4"  fill={wishlistedIds[item.id] ? "#e11d48" : "none"}
-        stroke={wishlistedIds[item.id] ? "#e11d48" : "#6b7280"}
-        strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    </button>
-    <button  onClick={() => {
-        const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
-        cartItems.push({ img: item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`, title: item.product_name, tag: item.category || "Product", price: `₹${Number(item.base_price || 0).toLocaleString()}` });
-        localStorage.setItem("cart", JSON.stringify(cartItems));
-        window.location.href = "/cart"; }}
-      className="absolute top-3 right-12 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition">
-      <img src={cart} alt="" className="w-4 h-4" />
-    </button>
-  </div>
-  <div className="p-4">
-    <p className="text-[10px] tracking-wider text-gray-500 uppercase">
-      {item.category || "Product"} {item.brand ? `• ${item.brand}` : ""}
-    </p>
-    <h3 className="mt-1 font-medium text-gray-800 dark:text-gray-100">
-      {item.product_name}
-    </h3>
-    {item.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
-    <p className="text-sm font-bold text-gray-900 dark:text-white mt-2">
-      ₹{Number(item.base_price || 0).toLocaleString()}
-    </p>
-    <button   onClick={() => {
-        const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
-        cartItems.push({ img: item.image ? `http://localhost:5000/uploads/${item.image}` : `https://via.placeholder.com/300?text=No+Image`, title: item.product_name, tag: item.category || "Product", price: `₹${Number(item.base_price || 0).toLocaleString()}` });
-        localStorage.setItem("cart", JSON.stringify(cartItems));
-        window.location.href = "/cart"; }}
-      className="mt-4 w-full bg-[#6f4e37] hover:bg-[#5a3d2b] transition text-white py-2 rounded-lg">
-      Add to Cart
-         </button>
-            </div>
-            </div>
-                    ))}
-                      </div>
-                        </div>                
-                           </div>
-          <div className="flex justify-center items-center gap-3 mt-10">
-              <button className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800">
-               Prev
-              </button>
-           {[1, 2, 3, 4, 5].map((page) => (
-         <button key={page} onClick={() => setActivePage(page)} className={`w-10 h-10 rounded-lg transition
-        ${
-          activePage === page
-            ? "bg-[#6f4e37] text-white shadow-lg"
-            : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border dark:border-gray-700"
-        }`} >
-      {page}
-    </button>))}
-  <button className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800">
-    Next
-  </button>
-</div>  
-    </div>
-       </div>
-         <div></div>
-                <Footer/>
-       </>
-  )
-}
+      <Footer />
+    </>
+  );
+};
+
 export default Categories;

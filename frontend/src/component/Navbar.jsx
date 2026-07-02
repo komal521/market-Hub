@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import searchIcon from "../assets/search.png";
 import heartIcon from "../assets/heart.png";
 import cartIcon from "../assets/shopping-cart.png";
@@ -10,42 +10,96 @@ import moonIcon from "../assets/moon.png";
 import logo from "../assets/logo.png";
 import profileImg from "../assets/profile.jpg";
 import downArrow from "../assets/down-arrow.png";
+
+// Static pages for search
+const PAGES = [
+  { name: "Home", path: "/home", icon: "🏠", desc: "Back to homepage" },
+  { name: "All Products", path: "/services", icon: "🛍️", desc: "Browse all products" },
+  { name: "Shop by Categories", path: "/categories", icon: "📂", desc: "Explore categories" },
+  { name: "About Us", path: "/about", icon: "ℹ️", desc: "Learn about us" },
+  { name: "Contact", path: "/contact", icon: "📞", desc: "Get in touch" },
+  { name: "Profile", path: "/profile", icon: "👤", desc: "Your account" },
+  { name: "Cart", path: "/cart", icon: "🛒", desc: "View your cart" },
+  { name: "Wishlist", path: "/wishlist", icon: "❤️", desc: "Your saved items" },
+];
+
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState({ products: [], categories: [], pages: [] });
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
+
+  // Search products + categories from backend + pages
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
-      fetch(`http://localhost:5000/api/products?searchQuery=${searchQuery}`)
+      const q = searchQuery.toLowerCase();
+
+      // Match pages
+      const matchedPages = PAGES.filter(p =>
+        p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+      );
+
+      // Fetch products + categories from backend
+      fetch(`http://localhost:5000/api/search?q=${encodeURIComponent(searchQuery)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.products) setSearchResults(data.products.slice(0, 5));
+          setSearchResults({
+            products: (data.products || []).slice(0, 5),
+            categories: (data.categories || []).slice(0, 3),
+            pages: matchedPages.slice(0, 3),
+          });
         })
-        .catch(err => console.error(err));
+        .catch(() => {
+          setSearchResults({ products: [], categories: [], pages: matchedPages.slice(0, 3) });
+        });
+
+      setShowSearchDropdown(true);
     } else {
-      setSearchResults([]);
+      setSearchResults({ products: [], categories: [], pages: [] });
+      setShowSearchDropdown(false);
     }
   }, [searchQuery]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const [wishlistCount, setWishlistCount] = useState(0);
   const [user, setUser] = useState(null);
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");});
+    return localStorage.getItem("theme") === "dark" || document.documentElement.classList.contains("dark");
+  });
   const location = useLocation();
+
   const fetchWishlistCount = () => {
     const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    setWishlistCount(wishlist.length); };
+    setWishlistCount(wishlist.length);
+  };
+
   useEffect(() => {
     fetchWishlistCount();
     window.addEventListener("wishlistUpdated", fetchWishlistCount);
-    return () => window.removeEventListener("wishlistUpdated", fetchWishlistCount); }, []);
+    return () => window.removeEventListener("wishlistUpdated", fetchWishlistCount);
+  }, []);
+
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
-      setUser(null);  }
+      setUser(null);
+    }
   }, [location.pathname]);
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -55,10 +109,20 @@ const Navbar = () => {
       localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
+
   const navLink = (path) =>
     location.pathname === path
       ? "text-[#6f4e37] font-semibold border-b-2 border-[#6f4e37] pb-0.5"
       : `hover:text-[#6f4e37] transition-colors duration-200 ${darkMode ? "text-gray-300" : "text-gray-600"}`;
+
+  const hasAnyResults = searchResults.products.length > 0 || searchResults.categories.length > 0 || searchResults.pages.length > 0;
+
+  const handleSearchItemClick = (path) => {
+    setShowSearchDropdown(false);
+    setSearchQuery("");
+    navigate(path);
+  };
+
   return (
     <header className={`sticky top-0 z-50 border-b shadow-sm transition-colors duration-300 ${darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -91,30 +155,125 @@ const Navbar = () => {
               </div>
             </nav>
           </div>
-          <div className="relative hidden lg:block z-50">
+
+          {/* Search Bar with Dynamic Dropdown */}
+          <div className="relative hidden lg:block z-50" ref={searchRef}>
             <div className={`flex items-center rounded-full px-5 py-3 w-[420px] transition-colors duration-300 ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}>
               <img src={searchIcon} alt="" className={`w-5 h-5 opacity-60 ${darkMode ? "invert" : ""}`} />
-              <input type="text" placeholder="Search products..."
+              <input type="text" placeholder="Search products, categories, pages..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setShowSearchDropdown(true)}
-                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                onFocus={() => { if (searchQuery.trim()) setShowSearchDropdown(true); }}
                 className={`bg-transparent outline-none ml-3 w-full text-sm ${darkMode ? "text-white placeholder-gray-400" : "text-black"}`}/>
             </div>
-            {showSearchDropdown && searchResults.length > 0 && (
-              <div className={`absolute top-full mt-2 w-full rounded-xl shadow-xl overflow-hidden z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
-                {searchResults.map((product) => (
-                  <Link key={product.id} to={`/product?id=${product.id}`} className={`flex items-center gap-3 p-3 hover:${darkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
-                    <img src={`http://localhost:5000/uploads/${product.image}`} alt="" className="w-10 h-10 object-cover rounded" />
-                    <div>
-                      <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{product.product_name}</h4>
-                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>₹{product.base_price}</p>
-                    </div>
-                  </Link>
-                ))}
+
+            {/* Search Results Dropdown */}
+            {showSearchDropdown && (
+              <div className={`absolute top-full mt-2 w-full rounded-2xl shadow-2xl overflow-hidden z-50 border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                {!hasAnyResults && searchQuery.trim() ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="text-3xl mb-2">🔍</div>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      No results for "{searchQuery}"
+                    </p>
+                    <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      Try different keywords
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Pages Section */}
+                    {searchResults.pages.length > 0 && (
+                      <div>
+                        <div className={`px-4 py-2 text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-500 bg-gray-900' : 'text-gray-400 bg-gray-50'}`}>
+                          Pages
+                        </div>
+                        {searchResults.pages.map((page) => (
+                          <button
+                            key={page.path}
+                            onClick={() => handleSearchItemClick(page.path)}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-amber-50'}`}
+                          >
+                            <span className="text-lg">{page.icon}</span>
+                            <div>
+                              <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{page.name}</h4>
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{page.desc}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Categories Section */}
+                    {searchResults.categories.length > 0 && (
+                      <div>
+                        <div className={`px-4 py-2 text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-500 bg-gray-900' : 'text-gray-400 bg-gray-50'}`}>
+                          Categories
+                        </div>
+                        {searchResults.categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => handleSearchItemClick(`/services?category=${encodeURIComponent(cat.category_name)}`)}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-amber-50'}`}
+                          >
+                            <span className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-sm">📂</span>
+                            <div>
+                              <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{cat.category_name}</h4>
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{cat.status || "Category"}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Products Section */}
+                    {searchResults.products.length > 0 && (
+                      <div>
+                        <div className={`px-4 py-2 text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'text-gray-500 bg-gray-900' : 'text-gray-400 bg-gray-50'}`}>
+                          Products
+                        </div>
+                        {searchResults.products.map((product) => (
+                          <button
+                            key={product.id}
+                            onClick={() => handleSearchItemClick(`/product?id=${product.id}`)}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-amber-50'}`}
+                          >
+                            <img
+                              src={product.image ? `http://localhost:5000/uploads/${product.image}` : ''}
+                              alt=""
+                              className="w-10 h-10 object-cover rounded-lg border dark:border-gray-600"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <h4 className={`text-sm font-semibold truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{product.product_name}</h4>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-bold ${darkMode ? 'text-amber-300' : 'text-[#6f4e37]'}`}>₹{product.base_price}</span>
+                                {product.category && <span className={`text-[10px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>• {product.category}</span>}
+                                {product.brand && <span className={`text-[10px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>• {product.brand}</span>}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* View All Results */}
+                    {searchResults.products.length > 0 && (
+                      <div className={`px-4 py-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                        <button
+                          onClick={() => handleSearchItemClick(`/services`)}
+                          className="w-full text-center text-xs font-semibold text-[#6f4e37] dark:text-amber-300 hover:underline"
+                        >
+                          View All Products →
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
+
           <div className="flex items-center gap-3">
             <div className="flex items-center mr-2">
               <button
@@ -170,7 +329,17 @@ const Navbar = () => {
         {menuOpen && (
           <div className={`md:hidden border-t py-4 ${darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
             <div className="flex flex-col gap-4 px-2">
+              {/* Mobile Search */}
+              <div className={`flex items-center rounded-xl px-4 py-2 ${darkMode ? "bg-gray-800" : "bg-gray-100"}`}>
+                <img src={searchIcon} alt="" className={`w-4 h-4 opacity-60 ${darkMode ? "invert" : ""}`} />
+                <input type="text" placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => { if (searchQuery.trim()) setShowSearchDropdown(true); }}
+                  className={`bg-transparent outline-none ml-3 w-full text-sm ${darkMode ? "text-white placeholder-gray-400" : "text-black"}`} />
+              </div>
               {[
+                { path: "/home", label: "Home" },
                 { path: "/services", label: "All Products" },
                 { path: "/categories", label: "Shop by Categories" }
               ].map(({ path, label }) => (

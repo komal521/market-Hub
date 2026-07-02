@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import heart from "../assets/heart (1).png";
 import b1 from "../assets/b1.webp";
@@ -20,6 +20,7 @@ import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 const Services = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 const [services, setServices] = useState([]);
 const [settings, setSettings] = useState({
   bookings_count: "15K+",
@@ -34,8 +35,17 @@ const [wishlistedIds, setWishlistedIds] = useState(() => {
   });
   return ids;
 });
+
+// Get category filter from URL
+const urlParams = new URLSearchParams(location.search);
+const categoryFilter = urlParams.get("category");
+
 useEffect(() => {
-  fetch("http://localhost:5000/api/products")
+  let apiUrl = "http://localhost:5000/api/products";
+  if (categoryFilter) {
+    apiUrl += `?categories=${encodeURIComponent(categoryFilter)}`;
+  }
+  fetch(apiUrl)
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
@@ -56,7 +66,7 @@ useEffect(() => {
       }
     })
     .catch((err) => console.log(err));
-}, []);
+}, [categoryFilter]);
 const handleWishlist = (e, item) => {
   e.stopPropagation();
 
