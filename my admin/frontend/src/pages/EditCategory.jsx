@@ -12,6 +12,7 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
   const [featured, setFeatured] = useState(false);
   const [sitemap, setSitemap] = useState(true);
   const [globalSearch, setGlobalSearch] = useState(true);
+  const [brands, setBrands] = useState([]);
   const [formData, setFormData] = useState({
     id: "",
     category_name: "",
@@ -20,6 +21,7 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
     description: "",
     status: "Active",
     breadcrumb: "",
+    brand: "",
     stats: "",
     created_at: ""
   });
@@ -28,6 +30,11 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    fetch("http://localhost:5000/api/brands")
+      .then(r => r.json())
+      .then(d => { if (d.success) setBrands(d.brands || []); })
+      .catch(console.log);
+
     if (editData) {
       setFormData({
         id: editData.id || "",
@@ -37,6 +44,7 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
         description: editData.description || "",
         status: editData.status || "Active",
         breadcrumb: editData.breadcrumb || "",
+        brand: editData.brand || "",
         stats: editData.stats || "",
         created_at: editData.created_at || ""
       });
@@ -69,6 +77,7 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
       data.append("featured", featured);
       data.append("sitemap", sitemap);
       data.append("global_search", globalSearch);
+      data.append("brand", formData.brand || "");
       
       if (image) {
         data.append("image", image);
@@ -188,6 +197,31 @@ const EditCategory = ({ darkMode, editData, setActive }) => {
          </select>
               <p className="mt-2 text-xs text-gray-400">
                 Select where this category fits in your catalog hierarchy.
+              </p>
+            </div>
+            <div className="mt-7">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wide text-gray-400">
+                  Brand
+                </label>
+                <img src={infoIcon} alt="" className="h-4 w-4" />
+              </div>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand}
+                onChange={handleChange}
+                list="brands-list"
+                placeholder="Type or select a brand..."
+                className="h-[54px] w-full rounded-2xl border border-gray-200 bg-[#fafafa] px-4 text-sm outline-none focus:border-[#6f4e37]"
+              />
+              <datalist id="brands-list">
+                {brands.map(b => (
+                  <option key={b.id} value={b.brand_name} />
+                ))}
+              </datalist>
+              <p className="mt-2 text-xs text-gray-400">
+                Type a brand name or select from existing brands.
               </p>
             </div>
             <div className="mt-7">

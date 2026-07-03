@@ -17,10 +17,20 @@ const ensureCategoriesTable = async () => {
       sitemap TINYINT(1) DEFAULT 1,
       global_search TINYINT(1) DEFAULT 1,
       breadcrumb VARCHAR(150),
+      brand VARCHAR(150),
       image VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-  `);};
+  `);
+  try {
+    const [cols] = await pool.execute(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='categories' AND COLUMN_NAME='brand'`
+    );
+    if (cols.length === 0) {
+      await pool.execute(`ALTER TABLE categories ADD COLUMN brand VARCHAR(150)`);
+    }
+  } catch(e) { console.log('brand col check:', e.message); }
+};
 const path = require("path");
 const UPLOADS_DIR = path.join(__dirname, "../../../backend/uploads");
 
@@ -175,13 +185,14 @@ router.put("/:id", upload.single("image"), async (req, res) => {
       sitemap,
       global_search,
       breadcrumb,
+      brand,
     } = req.body;
 
     let query;
     let params;
     if (req.file) {
       const image = req.file.filename;
-      query = `UPDATE categories SET category_name=?, slug=?, parent_category=?, description=?, seo_title=?, seo_description=?, status=?, featured=?, sitemap=?, global_search=?, breadcrumb=?, image=? WHERE id=?`;
+      query = `UPDATE categories SET category_name=?, slug=?, parent_category=?, description=?, seo_title=?, seo_description=?, status=?, featured=?, sitemap=?, global_search=?, breadcrumb=?, brand=?, image=? WHERE id=?`;
       params = [
         category_name,
         slug || "",
@@ -194,11 +205,12 @@ router.put("/:id", upload.single("image"), async (req, res) => {
         sitemap !== undefined ? Number(sitemap) : 1,
         global_search !== undefined ? Number(global_search) : 1,
         breadcrumb || "",
+        brand || "",
         image,
         id,
       ];
     } else {
-      query = `UPDATE categories SET category_name=?, slug=?, parent_category=?, description=?, seo_title=?, seo_description=?, status=?, featured=?, sitemap=?, global_search=?, breadcrumb=? WHERE id=?`;
+      query = `UPDATE categories SET category_name=?, slug=?, parent_category=?, description=?, seo_title=?, seo_description=?, status=?, featured=?, sitemap=?, global_search=?, breadcrumb=?, brand=? WHERE id=?`;
       params = [
         category_name,
         slug || "",
@@ -211,6 +223,7 @@ router.put("/:id", upload.single("image"), async (req, res) => {
         sitemap !== undefined ? Number(sitemap) : 1,
         global_search !== undefined ? Number(global_search) : 1,
         breadcrumb || "",
+        brand || "",
         id,
       ];
     }

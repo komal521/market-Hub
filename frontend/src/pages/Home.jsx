@@ -248,34 +248,49 @@ let displayNewArrivals = [...fetchedNewArrivals];
     <div className="flex items-center justify-between mb-10">
       <div>
         <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-          Featured Brands
+          Categories
         </h2>
         <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Discover top brands curated for you.
+          Explore our curated collections — tap any category to discover products.
         </p>
       </div>
-      <button className="hidden md:flex items-center gap-2 text-blue-600 font-semibold">
+      <button onClick={() => window.location.href = "/categories"} className="hidden md:flex items-center gap-2 text-[#6f4e37] font-semibold hover:underline">
         View All
-        <img  src={viewArrow}  alt=""  className="w-4 h-4"/>
+        <img src={viewArrow} alt="" className="w-4 h-4" style={{ filter: "invert(35%) sepia(60%) saturate(600%) hue-rotate(10deg) brightness(80%)" }} />
       </button>
     </div>
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
-      {brands.map((item) => (
-        <div key={item.id}
-          className="cursor-pointer rounded-2xl border p-6 transition-all duration-300 flex flex-col items-center text-center bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-md hover:scale-105" >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 relative bg-gray-100 dark:bg-gray-600">
-            <img src={item.image ? `http://localhost:5000/uploads/${item.image}` : ""} alt={item.brand_name} className="w-12 h-12 object-contain rounded-full" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 mb-10">
+      {categories.slice(0, 12).map((cat) => (
+        <div
+          key={cat.id}
+          onClick={() => window.location.href = `/services?category=${encodeURIComponent(cat.category_name)}`}
+          className="cursor-pointer rounded-2xl border p-5 transition-all duration-300 flex flex-col items-center text-center bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-md hover:scale-105"  >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 overflow-hidden bg-gray-100 dark:bg-gray-600">
+            {cat.image ? (
+              <img
+                src={`http://localhost:5000/uploads/${cat.image}`}
+                alt={cat.category_name}
+                className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl">📦</span>
+            )}
           </div>
-          <h3 className="font-semibold text-gray-905 dark:text-white">
-            {item.brand_name}
+          <h3 className="font-semibold text-sm text-gray-800 dark:text-white leading-tight">
+            {cat.category_name}
           </h3>
+          {cat.brand && (
+            <p className="text-[10px] text-[#6f4e37] dark:text-amber-400 mt-1 font-medium truncate w-full">
+              {cat.brand}
+            </p>
+          )}
         </div>
       ))}
     </div>
-    <div className="md:hidden flex justify-center mt-8">
-      <button className="flex items-center gap-2 text-blue-600 font-semibold">
-        View All
-        <img src={viewArrow} alt=""  className="w-4 h-4" />
+
+    <div className="flex justify-center mt-8">
+      <button onClick={() => window.location.href = "/categories"} className="flex items-center gap-2 text-[#6f4e37] font-semibold hover:underline">
+        View All Categories
+        <img src={viewArrow} alt="" className="w-4 h-4" style={{ filter: "invert(35%) sepia(60%) saturate(600%) hue-rotate(10deg) brightness(80%)" }} />
       </button>
     </div>
   </div>

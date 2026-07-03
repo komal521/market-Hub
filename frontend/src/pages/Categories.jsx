@@ -5,7 +5,7 @@ import Footer from "../component/Footer";
 import cloths from "../assets/cloths.jpeg";
 import filterIcon from "../assets/filter.png";
 import downArrow from "../assets/down-arrow.png";
-
+import rightArrowIcon from "../assets/right-arrow (1).png";
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
@@ -13,18 +13,14 @@ const Categories = () => {
   const [searchText, setSearchText] = useState("");
   const [activePage, setActivePage] = useState(1);
   const ITEMS_PER_PAGE = 12;
-
   useEffect(() => {
     fetchCategories();
   }, []);
-
   useEffect(() => {
     let filtered = [...categories];
-    // Filter by status
     if (selectedStatus !== "All") {
       filtered = filtered.filter(c => c.status === selectedStatus);
     }
-    // Filter by search
     if (searchText.trim()) {
       const q = searchText.toLowerCase();
       filtered = filtered.filter(c =>
@@ -36,7 +32,6 @@ const Categories = () => {
     setFilteredCategories(filtered);
     setActivePage(1);
   }, [categories, selectedStatus, searchText]);
-
   const fetchCategories = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/categories");
@@ -46,19 +41,12 @@ const Categories = () => {
       );
     } catch (error) {
       console.log("Error fetching categories", error);
-    }
-  };
-
-  // Pagination
+    } };
   const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
   const paginatedCategories = filteredCategories.slice(
     (activePage - 1) * ITEMS_PER_PAGE,
-    activePage * ITEMS_PER_PAGE
-  );
-
+    activePage * ITEMS_PER_PAGE );
   const statusOptions = ["All", "Active", "Trending", "Hidden"];
-
-  // Generate a gradient background for categories without images
   const getCategoryGradient = (index) => {
     const gradients = [
       "from-amber-500 to-orange-600",
@@ -74,8 +62,6 @@ const Categories = () => {
     ];
     return gradients[index % gradients.length];
   };
-
-  // Get category icon based on name
   const getCategoryIcon = (name) => {
     const n = (name || "").toLowerCase();
     if (n.includes("electron") || n.includes("laptop") || n.includes("phone")) return "💻";
@@ -92,12 +78,10 @@ const Categories = () => {
     if (n.includes("food") || n.includes("grocery")) return "🍎";
     return "📦";
   };
-
   return (
     <>
       <Navbar />
       <div className="bg-[#f5f5fa] dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-100 transition-colors duration-300">
-        {/* Hero Banner */}
         <div className="max-w-7xl mx-auto px-4 md:px-6 pt-8">
           <div className="relative overflow-hidden rounded-3xl h-[200px] md:h-[280px]">
             <img src={cloths} alt="Categories" className="w-full h-full object-cover" />
@@ -116,38 +100,25 @@ const Categories = () => {
             </div>
           </div>
         </div>
-
-        {/* Content Area */}
         <div className="max-w-7xl mx-auto px-4 md:px-6 mt-8 pb-12">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Sidebar Filters */}
             <div className="w-full lg:w-64 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border dark:border-gray-700 h-fit lg:sticky lg:top-24">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <img src={filterIcon} alt="" className="w-4 h-4 dark:invert" />
                   <h3 className="font-semibold dark:text-white">Filter</h3>
                 </div>
-                <button
-                  onClick={() => { setSelectedStatus("All"); setSearchText(""); }}
-                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition"
-                >
+                <button onClick={() => { setSelectedStatus("All"); setSearchText(""); }}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition" >
                   Clear All
                 </button>
               </div>
-
-              {/* Search Categories */}
               <div className="mb-5">
                 <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 block">Search</label>
-                <input
-                  type="text"
-                  placeholder="Search categories..."
-                  value={searchText}
+                <input type="text" placeholder="Search categories..." value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-[#6f4e37] dark:text-white transition"
-                />
+                  className="w-full px-3 py-2 rounded-xl border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:border-[#6f4e37] dark:text-white transition" />
               </div>
-
-              {/* Status Filter */}
               <div className="border-b dark:border-gray-700 pb-4 mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-bold dark:text-white">Status</h4>
@@ -156,13 +127,10 @@ const Categories = () => {
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                   {statusOptions.map((status) => (
                     <label key={status} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="statusFilter"
+                      <input   type="radio"   name="statusFilter"
                         checked={selectedStatus === status}
                         onChange={() => setSelectedStatus(status)}
-                        className="accent-[#6f4e37]"
-                      />
+                        className="accent-[#6f4e37]" />
                       {status}
                       <span className="ml-auto text-xs text-gray-400">
                         {status === "All"
@@ -173,8 +141,6 @@ const Categories = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Summary Box */}
               <div className="bg-[#6f4e37] border border-black rounded-2xl p-4">
                 <h4 className="text-black font-semibold mb-2">Browse All</h4>
                 <p className="text-xs text-white mb-4">
@@ -185,8 +151,6 @@ const Categories = () => {
                 </Link>
               </div>
             </div>
-
-            {/* Main Categories Grid */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -200,7 +164,6 @@ const Categories = () => {
                   </button>
                 </div>
               </div>
-
               {paginatedCategories.length === 0 ? (
                 <div className="text-center py-20">
                   <div className="text-5xl mb-4">📂</div>
@@ -213,24 +176,19 @@ const Categories = () => {
                     <Link
                       key={cat.id}
                       to={`/services?category=${encodeURIComponent(cat.category_name)}`}
-                      className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border dark:border-gray-700 group"
-                    >
-                      {/* Category Image or Gradient */}
+                      className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border dark:border-gray-700 group"   >
                       <div className="relative h-48 overflow-hidden">
                         {cat.image ? (
                           <img
                             src={`http://localhost:5000/uploads/${cat.image}`}
                             alt={cat.category_name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                           <div className={`w-full h-full bg-gradient-to-br ${getCategoryGradient(index)} flex items-center justify-center group-hover:scale-110 transition-transform duration-500`}>
                             <span className="text-6xl opacity-80">{getCategoryIcon(cat.category_name)}</span>
                           </div>
                         )}
-                        {/* Overlay gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        {/* Status badge */}
                         <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                           cat.status === "Active" ? "bg-green-500/90 text-white" :
                           cat.status === "Trending" ? "bg-amber-500/90 text-white" :
@@ -238,21 +196,17 @@ const Categories = () => {
                         }`}>
                           {cat.status || "Active"}
                         </span>
-                        {/* Featured badge */}
                         {cat.featured === 1 && (
                           <span className="absolute top-3 right-3 bg-white/90 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold">
-                            ⭐ Featured
+                             Featured
                           </span>
                         )}
-                        {/* Category name on image */}
                         <div className="absolute bottom-3 left-4 right-4">
                           <h3 className="text-white font-bold text-lg truncate drop-shadow-lg">
                             {cat.category_name}
                           </h3>
                         </div>
                       </div>
-
-                      {/* Card Body */}
                       <div className="p-4">
                         {cat.parent_category && (
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
@@ -268,31 +222,32 @@ const Categories = () => {
                             Explore {cat.category_name} collection
                           </p>
                         )}
-
                         <div className="flex items-center justify-between mt-4 pt-3 border-t dark:border-gray-700">
-                          <span className="text-xs font-medium text-[#6f4e37] dark:text-amber-300">
-                            Explore Collection →
+                          <span className="flex items-center gap-1.5 text-xs font-medium text-[#6f4e37] dark:text-amber-300">
+                            Explore Collection
+                            <img src={rightArrowIcon} alt="arrow" className="w-3 h-3 object-contain" style={{ filter: "invert(35%) sepia(60%) saturate(600%) hue-rotate(10deg) brightness(80%)" }} />
                           </span>
-                          {cat.slug && (
+                          {cat.brand ? (
+                            <span className="text-[10px] text-white bg-[#6f4e37] px-2 py-0.5 rounded-full font-medium">
+                              {cat.brand}
+                            </span>
+                          ) : cat.slug ? (
                             <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
                               {cat.slug}
                             </span>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </Link>
                   ))}
                 </div>
               )}
-
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-3 mt-10">
                   <button
                     onClick={() => setActivePage(p => Math.max(1, p - 1))}
                     disabled={activePage === 1}
-                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 disabled:opacity-40"
-                  >
+                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 disabled:opacity-40" >
                     Prev
                   </button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -303,16 +258,13 @@ const Categories = () => {
                         activePage === page
                           ? "bg-[#6f4e37] text-white shadow-lg"
                           : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border dark:border-gray-700"
-                      }`}
-                    >
+                      }`} >
                       {page}
                     </button>
                   ))}
-                  <button
-                    onClick={() => setActivePage(p => Math.min(totalPages, p + 1))}
+                  <button onClick={() => setActivePage(p => Math.min(totalPages, p + 1))}
                     disabled={activePage === totalPages}
-                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 disabled:opacity-40"
-                  >
+                    className="border dark:border-gray-700 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 disabled:opacity-40"  >
                     Next
                   </button>
                 </div>

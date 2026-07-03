@@ -87,7 +87,6 @@ const Categories = ({ darkMode, setActive, setEditData }) => {
       const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
         method: "DELETE",
       });
-
       const data = await res.json();
       if (data.success) {
         setCategories((prev) => prev.filter((item) => item.id !== id));
@@ -237,9 +236,10 @@ const Categories = ({ darkMode, setActive, setEditData }) => {
               </div>
               <span className="text-xs text-gray-400">Showing all {categories.length} entries</span>
             </div>
-            <div className="hidden md:grid w-full grid-cols-[70px_170px_90px_100px_120px] justify-between border-b border-gray-100 px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-gray-400 items-center">
+            <div className="hidden md:grid w-full grid-cols-[70px_150px_120px_90px_100px_120px] justify-between border-b border-gray-100 px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-gray-400 items-center">
               <span>Image</span>
               <span>Category Info</span>
+              <span>Brand</span>
               <span>Status</span>
               <span>Created At</span>
               <span className="text-right pr-4">Actions</span>
@@ -258,7 +258,7 @@ const Categories = ({ darkMode, setActive, setEditData }) => {
               {categories.filter(item => item.category_name?.toLowerCase().includes(searchQuery.toLowerCase())).map((item) => (
                 <div
                   key={item.id || item.category_name}
-                  className="w-full grid grid-cols-1 md:grid-cols-[70px_170px_90px_100px_120px] justify-between gap-x-2 rounded-2xl border border-gray-100 bg-[#fcfbf7] px-4 py-3 shadow-sm md:items-center" >
+                  className="w-full grid grid-cols-1 md:grid-cols-[70px_150px_120px_90px_100px_120px] justify-between gap-x-2 rounded-2xl border border-gray-100 bg-[#fcfbf7] px-4 py-3 shadow-sm md:items-center" >
                   <img
                     src={item.image ? `http://localhost:5000/uploads/${item.image}` : "https://via.placeholder.com/80"}
                     alt={item.category_name || "Category"}
@@ -266,6 +266,15 @@ const Categories = ({ darkMode, setActive, setEditData }) => {
                   <div className="min-w-0 flex flex-col">
                     <h3 className="font-bold text-[#1f2937] truncate">{item.category_name || "Untitled category"}</h3>
                     <p className="mt-1 text-xs text-gray-400 truncate">{item.slug || "No slug"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    {item.brand ? (
+                      <span className="text-xs font-semibold text-white bg-[#6f4e37] px-2 py-1 rounded-full">
+                        {item.brand}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </div>
                   <span
                     className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${
