@@ -35,21 +35,29 @@ const [wishlistedIds, setWishlistedIds] = useState(() => {
   });
   return ids;
 });
-
-// Get category filter from URL
 const urlParams = new URLSearchParams(location.search);
 const categoryFilter = urlParams.get("category");
 
 useEffect(() => {
   let apiUrl = "http://localhost:5000/api/products";
   if (categoryFilter) {
-    apiUrl += `?categories=${encodeURIComponent(categoryFilter)}`;
+    apiUrl += `?categories=${encodeURIComponent(categoryFilter.trim())}`;
   }
+  
   fetch(apiUrl)
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        setServices(data.products);
+        if (data.products && data.products.length > 0) {
+          setServices(data.products);
+        } else if (categoryFilter) {
+          // If no products found for category, fetch all products as fallback
+          fetch("http://localhost:5000/api/products")
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) setServices(d.products);
+            });
+        }
       }
     })
     .catch((err) => console.log(err));
@@ -142,6 +150,11 @@ const handleWishlist = (e, item) => {
               <p className="text-gray-500 dark:text-gray-400 text-sm">Services</p>
             </div>
           </div>
+{categoryFilter && services.length > 0 && !services.some(s => s.category?.toLowerCase() === categoryFilter.trim().toLowerCase()) && (
+  <div className="col-span-full mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-2xl text-center">
+    No products found in "{categoryFilter}". Showing all available products instead.
+  </div>
+)}
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
           {services.map((item, index) => (
   <div  key={index}  onClick={() => navigate("/product?id=" + item.id)}
