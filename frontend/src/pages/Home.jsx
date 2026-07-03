@@ -182,11 +182,11 @@ let displayNewArrivals = [...fetchedNewArrivals];
     <section className="bg-[#f7f7f7] dark:bg-gray-900 transition-colors duration-300 min-h-screen flex items-center">
       <div className="max-w-7xl mx-auto px-6 py-12 w-full">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <span className="bg-blue-100 dark:bg-blue-900/40 text-black dark:text-blue-200 text-xs font-semibold px-4 py-2 rounded-full">
+          <div className="animate-fade-in-left">
+            <span className="inline-block bg-blue-100 dark:bg-blue-900/40 text-black dark:text-blue-200 text-xs font-semibold px-4 py-2 rounded-full animate-fade-in-down delay-100">
               SPRING COLLECTION 2024
             </span>
-            <h1 className="mt-6 text-5xl lg:text-7xl font-bold leading-tight dark:text-white">
+            <h1 className="mt-6 text-5xl lg:text-7xl font-bold leading-tight dark:text-white animate-fade-in-up delay-200">
               Refine Your
               <br />
               <span className="text-[#6f4e37] dark:text-[#d7a53f] italic">
@@ -195,40 +195,40 @@ let displayNewArrivals = [...fetchedNewArrivals];
               <br />
               Every Day.
             </h1>
-            <p className="mt-6 text-gray-600 dark:text-gray-300 text-lg max-w-lg">
+            <p className="mt-6 text-gray-600 dark:text-gray-300 text-lg max-w-lg animate-fade-in-up delay-300">
               Discover curated selections from the world's most innovative
               brands. Premium quality, sustainable materials and timeless
               design at your fingertips.
             </p>
-            <div className="flex flex-wrap gap-4 mt-8">
+            <div className="flex flex-wrap gap-4 mt-8 animate-fade-in-up delay-400">
               <button onClick={() => (window.location.href = "/categories")}
-                className="bg-[#6f4e37] text-white px-7 py-4 rounded-full flex items-center gap-3 hover:bg-blue-700 dark:hover:bg-amber-700 transition">
+                className="bg-[#6f4e37] text-white px-7 py-4 rounded-full flex items-center gap-3 hover:bg-blue-700 dark:hover:bg-amber-700 transition hover:scale-105 active:scale-95 duration-200">
                 Shop Now
                 <img src={arrowIcon} alt="" className="w-4 h-4 invert" />
               </button>
               <button onClick={() => (window.location.href = "/services")}
-                className="border border-gray-300 dark:border-gray-600 dark:text-gray-200 px-7 py-4 rounded-full hover:bg-white dark:hover:bg-gray-800 transition" >
+                className="border border-gray-300 dark:border-gray-600 dark:text-gray-200 px-7 py-4 rounded-full hover:bg-white dark:hover:bg-gray-800 transition hover:scale-105 active:scale-95 duration-200" >
                 Explore Products
               </button>
             </div>
-            <div className="flex flex-wrap gap-10 mt-12">
-              <div>
+            <div className="flex flex-wrap gap-10 mt-12 animate-fade-in-up delay-500">
+              <div className="hover:scale-105 transition-transform">
                 <h3 className="text-3xl font-bold dark:text-white">15k+</h3>
                 <p className="text-gray-500 dark:text-gray-400">Premium Items</p>
               </div>
-              <div>
+              <div className="hover:scale-105 transition-transform">
                 <h3 className="text-3xl font-bold dark:text-white">98%</h3>
                 <p className="text-gray-500 dark:text-gray-400">Happy Customers</p>
               </div>
-              <div>
+              <div className="hover:scale-105 transition-transform">
                 <h3 className="text-3xl font-bold dark:text-white">24h</h3>
                 <p className="text-gray-500 dark:text-gray-400">Fast Delivery</p>
               </div>
             </div>
           </div>
-          <div className="relative">
-            <img src={heroImage} alt="" className="rounded-2xl shadow-2xl w-full"/>
-            <div className="absolute -bottom-5 left-4 bg-white dark:bg-gray-800 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3">
+          <div className="relative animate-fade-in-right">
+            <img src={heroImage} alt="" className="rounded-2xl shadow-2xl w-full hover:scale-[1.02] transition-transform duration-500"/>
+            <div className="absolute -bottom-5 left-4 bg-white dark:bg-gray-800 px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-float">
               <img src={starIcon} alt="" className="w-5 h-5"/>
               <div>
                 <h4 className="font-semibold text-sm dark:text-white">
@@ -260,12 +260,13 @@ let displayNewArrivals = [...fetchedNewArrivals];
       </button>
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 mb-10">
-      {categories.slice(0, 12).map((cat) => (
+      {categories.slice(0, 12).map((cat, index) => (
         <div
           key={cat.id}
           onClick={() => window.location.href = `/services?category=${encodeURIComponent(cat.category_name)}`}
-          className="cursor-pointer rounded-2xl border p-5 transition-all duration-300 flex flex-col items-center text-center bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-md hover:scale-105"  >
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 overflow-hidden bg-gray-100 dark:bg-gray-600">
+          className="cursor-pointer rounded-2xl border p-5 transition-all duration-300 flex flex-col items-center text-center bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:shadow-lg hover:scale-105 active:scale-95 animate-fade-in-up"
+          style={{ animationDelay: `${index * 50}ms` }} >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 overflow-hidden bg-gray-100 dark:bg-gray-600 transition-transform duration-300 hover:rotate-6">
             {cat.image ? (
               <img
                 src={`http://localhost:5000/uploads/${cat.image}`}
@@ -306,8 +307,10 @@ let displayNewArrivals = [...fetchedNewArrivals];
       </p>
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {displayFeatured.map((product) => (
-        <div key={product.id} className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
+      {displayFeatured.map((product, index) => (
+        <div key={product.id} 
+             className="bg-white dark:bg-gray-700 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] animate-fade-in-up"
+             style={{ animationDelay: `${index * 100}ms` }}>
         <div className="relative">
   <img src={product.image}  alt=""
     className="w-full h-64 object-cover"/>
@@ -431,9 +434,10 @@ let displayNewArrivals = [...fetchedNewArrivals];
       </div>
     </div>
     <div className="grid md:grid-cols-3 gap-6">
-      {displayNewArrivals.map((item) => (
+      {displayNewArrivals.map((item, index) => (
         <div key={item.id}
-          className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 flex items-center gap-4 hover:shadow-lg transition">
+          className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 flex items-center gap-4 hover:shadow-2xl hover:-translate-y-1.5 duration-300 transition-all animate-fade-in-up"
+          style={{ animationDelay: `${index * 100}ms` }}>
           <img src={item.image} alt="" className="w-24 h-24 rounded-lg object-cover"/>
           <div>
             <p className="text-[10px] tracking-wider text-gray-500 uppercase mb-1">

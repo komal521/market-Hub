@@ -68,8 +68,8 @@ const leaders = [
       <Navbar />
       <div className="bg-[#f8f5f2] dark:bg-gray-900 min-h-screen transition-colors duration-300">
         <section className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-          <div className="bg-gradient-to-r from-[#5a3d2b] via-[#6f4e37] to-[#b78457] rounded-3xl p-6 md:p-10 lg:p-14 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-xl">
-            <div className="text-white max-w-xl">
+          <div className="bg-gradient-to-r from-[#5a3d2b] via-[#6f4e37] to-[#b78457] rounded-3xl p-6 md:p-10 lg:p-14 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl animate-fade-in-down">
+            <div className="text-white max-w-xl animate-fade-in-left delay-200">
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
                 Crafting Premium Digital
                 <span className="text-black dark:text-amber-100">
@@ -84,27 +84,27 @@ const leaders = [
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => (window.location.href = "/services")}
-                  className="bg-white dark:bg-gray-800 text-black dark:text-white px-6 py-3 rounded-full font-semibold hover:scale-105 transition">
+                  className="bg-white dark:bg-gray-800 text-black dark:text-white px-6 py-3 rounded-full font-semibold hover:scale-105 active:scale-95 duration-200 transition">
                   Explore Products
                 </button>
-                <button className="bg-white dark:bg-gray-800 text-[#6f4e37] dark:text-[#d7a53f] px-6 py-3 rounded-full font-semibold hover:scale-105 transition">
+                <button className="bg-white dark:bg-gray-800 text-[#6f4e37] dark:text-[#d7a53f] px-6 py-3 rounded-full font-semibold hover:scale-105 active:scale-95 duration-200 transition">
                   Our Legacy
                 </button>
               </div>
             </div>
-            <div className="w-full lg:w-auto">
+            <div className="w-full lg:w-auto animate-fade-in-right delay-200">
               <img src={a1} alt="About"
-                className="w-full lg:w-[500px] h-[250px] md:h-[350px] object-cover rounded-2xl shadow-lg" />
+                className="w-full lg:w-[500px] h-[250px] md:h-[350px] object-cover rounded-2xl shadow-lg hover:scale-102 transition-transform duration-500" />
             </div>
           </div>
         </section>
         <section className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-16">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div>
+            <div className="animate-zoom-in">
               <img src={a2} alt="Our Story"
-                className="w-full h-[300px] md:h-[500px] object-cover rounded-2xl shadow-lg" />
+                className="w-full h-[300px] md:h-[500px] object-cover rounded-2xl shadow-lg hover:scale-102 transition-transform duration-500" />
             </div>
-            <div>
+            <div className="animate-fade-in-right delay-200">
               <span className="text-[#6f4e37] dark:text-[#d7a53f] font-semibold uppercase tracking-wider">
                 About Us </span>
               <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mt-3 mb-6">
