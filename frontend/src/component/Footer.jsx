@@ -111,6 +111,10 @@ const Footer = () => {
                 className="hover:text-amber-200 cursor-pointer transition">
                 Privacy Policy
               </li>
+              <li onClick={() => navigate("/terms-conditions")}
+                className="hover:text-amber-200 cursor-pointer transition">
+                Terms &amp; Conditions
+              </li>
             </ul>
           </div>
           <div>
@@ -151,7 +155,8 @@ const Footer = () => {
               className="cursor-pointer hover:text-amber-200 transition text-white" >
               Privacy Policy
             </span>
-            <span className="cursor-pointer hover:text-amber-200 transition text-white">
+            <span onClick={() => navigate("/terms-conditions")}
+              className="cursor-pointer hover:text-amber-200 transition text-white">
               Terms &amp; Conditions
             </span>
           </div>
