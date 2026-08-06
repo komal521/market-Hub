@@ -39,7 +39,7 @@ const ProductManagement = ({ darkMode, setActive, setEditData }) => {
         product.name || product.product_name || "",
         product.category || "",
         product.brand || "",
-        product.price || `₹${product.base_price}`,
+        product.price ? product.price.replace(/₹/g, 'Rs. ') : `Rs. ${product.base_price}`,
         product.stock || `${product.stock_quantity} Units`,
         product.status || (product.is_active ? "Active" : "Draft")
       ];

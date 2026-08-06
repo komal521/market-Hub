@@ -16,6 +16,7 @@ import orderIcon from "../assets/order.png";
 import revenueIcon from "../assets/revenue.png";
 import boxIcon from "../assets/box.png";
 import groupIcon from "../assets/group.png";
+import closeIcon from "../assets/close.png";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 const Dashboard = ({ darkMode, setActive, setEditData }) => {
@@ -221,7 +222,7 @@ const Dashboard = ({ darkMode, setActive, setEditData }) => {
       head: [["Metric", "Value"]],
       body: [
         ["Total Orders", String(cardData.totalOrders || 0)],
-        ["Total Revenue", `₹${Number(cardData.totalRevenue || 0).toLocaleString("en-IN")}`],
+        ["Total Revenue", `Rs. ${Number(cardData.totalRevenue || 0).toLocaleString("en-IN")}`],
         ["Total Products", String(cardData.totalProducts || 0)],
         ["Active Users", String(cardData.activeUsers || 0)],
       ],

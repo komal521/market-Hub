@@ -6,12 +6,10 @@ import { useNavigate } from "react-router-dom";
 import sendIcon from "../assets/send.png";
 import { useState } from "react";
 import logo from "../assets/logo.png";
-
 const Footer = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
-
   const handleSubscribe = async () => {
     if (!email) return;
     setStatus("Sending...");
@@ -33,7 +31,6 @@ const Footer = () => {
       setStatus("Error. Try again.");
     }
   };
-
   return (
     <footer className="bg-[#725c4c] border-t border-[#725c4c]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
@@ -115,6 +112,14 @@ const Footer = () => {
                 className="hover:text-amber-200 cursor-pointer transition">
                 Terms &amp; Conditions
               </li>
+              <li onClick={() => navigate("/shipping-policy")}
+                className="hover:text-amber-200 cursor-pointer transition">
+                Shipping Policy
+              </li>
+              <li onClick={() => navigate("/faq")}
+                className="hover:text-amber-200 cursor-pointer transition">
+                FAQ
+              </li>
             </ul>
           </div>
           <div>
@@ -158,6 +163,14 @@ const Footer = () => {
             <span onClick={() => navigate("/terms-conditions")}
               className="cursor-pointer hover:text-amber-200 transition text-white">
               Terms &amp; Conditions
+            </span>
+            <span onClick={() => navigate("/shipping-policy")}
+              className="cursor-pointer hover:text-amber-200 transition text-white">
+              Shipping Policy
+            </span>
+            <span onClick={() => navigate("/faq")}
+              className="cursor-pointer hover:text-amber-200 transition text-white">
+              FAQ
             </span>
           </div>
         </div>

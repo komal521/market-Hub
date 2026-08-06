@@ -1464,10 +1464,18 @@ app.get("/api/dashboard/cards", (req, res) => {
 });
 app.post("/api/wishlist", (req, res) => {
   const { userId, productId } = req.body;
-  if (!userId || !productId) {
-    return res.status(400).json({ success: false, message: "userId and productId required" });
-  }
-  db.query("SELECT * FROM wishlists WHERE user_id = ? AND product_id = ?", [userId, productId], (err, results) => {
+  if (!userId || !productId) return res.status(400).json({ success: false, message: "Missing params" });
+  
+  db.query(`CREATE TABLE IF NOT EXISTS wishlists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_wishlist (user_id, product_id)
+  )`, (createErr) => {
+    if (createErr) console.error("wishlist table error", createErr);
+    
+    db.query("SELECT * FROM wishlists WHERE user_id = ? AND product_id = ?", [userId, productId], (err, results) => {
     if (err) return res.status(500).json({ success: false, message: "Error checking wishlist" });
     if (results && results.length > 0) {
       db.query("DELETE FROM wishlists WHERE user_id = ? AND product_id = ?", [userId, productId], (err2) => {
@@ -1481,10 +1489,18 @@ app.post("/api/wishlist", (req, res) => {
       });
     }
   });
+  });
 });
 app.get("/api/wishlist/:userId", (req, res) => {
   const { userId } = req.params;
-  const sql = `
+  db.query(`CREATE TABLE IF NOT EXISTS wishlists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_wishlist (user_id, product_id)
+  )`, (createErr) => {
+    const sql = `
     SELECT w.id as wishlist_id, w.product_id, w.created_at as wishlisted_at,
            p.product_name, p.base_price, p.discount_price, p.image, p.category, p.brand, p.stock_quantity
     FROM wishlists w
@@ -1492,15 +1508,24 @@ app.get("/api/wishlist/:userId", (req, res) => {
     WHERE w.user_id = ?
     ORDER BY w.created_at DESC`;
   db.query(sql, [userId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Error fetching wishlist" });
-    res.json({ success: true, wishlist: results || [] });
+      if (err) return res.status(500).json({ success: false, message: "Error fetching wishlist" });
+      res.json({ success: true, wishlist: results || [] });
+    });
   });
 });
 app.delete("/api/wishlist/:userId/:productId", (req, res) => {
   const { userId, productId } = req.params;
-  db.query("DELETE FROM wishlists WHERE user_id = ? AND product_id = ?", [userId, productId], (err) => {
+  db.query(`CREATE TABLE IF NOT EXISTS wishlists (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_wishlist (user_id, product_id)
+  )`, (createErr) => {
+    db.query("DELETE FROM wishlists WHERE user_id = ? AND product_id = ?", [userId, productId], (err) => {
     if (err) return res.status(500).json({ success: false, message: "Delete failed" });
-    res.json({ success: true, message: "Removed from wishlist" });
+      res.json({ success: true, message: "Removed from wishlist" });
+    });
   });
 });
 app.post("/api/share-email", async (req, res) => {
@@ -1550,6 +1575,38 @@ app.get("/api/search", (req, res) => {
     db.query("SELECT * FROM categories WHERE category_name LIKE ? LIMIT 10", [searchTerm], (err2, categories) => {
       if (err2) return res.json({ success: true, products: products || [], categories: [] });
       res.json({ success: true, products: products || [], categories: categories || [] });
+    });
+  });
+});
+
+app.get("/api/admin/search", (req, res) => {
+  const q = req.query.q;
+  if (!q) return res.json({ pages: [], users: [], orders: [], products: [] });
+  
+  const searchPattern = `%${q}%`;
+  const lowerQ = q.toLowerCase();
+  
+  const pages = [
+    { name: "Dashboard", type: "page", icon: "📊" },
+    { name: "Order Management", type: "page", icon: "📦" },
+    { name: "Product Management", type: "page", icon: "🛍️" },
+    { name: "Categories", type: "page", icon: "📁" },
+    { name: "Users", type: "page", icon: "👥" },
+    { name: "Enquiries", type: "page", icon: "📧" },
+    { name: "Support", type: "page", icon: "🎧" },
+    { name: "Settings", type: "page", icon: "⚙️" }
+  ].filter(p => p.name.toLowerCase().includes(lowerQ));
+
+  const results = { pages, users: [], orders: [], products: [] };
+  
+  db.query("SELECT id, full_name as name, email FROM users WHERE full_name LIKE ? OR email LIKE ? LIMIT 3", [searchPattern, searchPattern], (err, users) => {
+    if (!err && users) results.users = users;
+    db.query("SELECT id, customer_name as name, email FROM orders WHERE customer_name LIKE ? OR email LIKE ? OR id LIKE ? LIMIT 3", [searchPattern, searchPattern, searchPattern], (err, orders) => {
+      if (!err && orders) results.orders = orders;
+      db.query("SELECT id, product_name as name, base_price, image FROM products WHERE product_name LIKE ? OR sku LIKE ? LIMIT 3", [searchPattern, searchPattern], (err, products) => {
+        if (!err && products) results.products = products;
+        res.json(results);
+      });
     });
   });
 });
@@ -1722,14 +1779,11 @@ app.get("/api/revenue-graph", (req, res) => {
     res.status(200).json({ success: true, data: months });
   });
 });
-
-// ─── Newsletter Subscribe API ───────────────────────────────────────────────
 app.post("/api/newsletter/subscribe", (req, res) => {
   const { email } = req.body;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ success: false, message: "Valid email required" });
   }
-  // Create table if not exists
   db.query(
     `CREATE TABLE IF NOT EXISTS newsletter_subscribers (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1737,26 +1791,19 @@ app.post("/api/newsletter/subscribe", (req, res) => {
       subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     (createErr) => {
-      if (createErr) {
-        console.log("Newsletter table error:", createErr);
-        return res.status(500).json({ success: false, message: "Server error" });
-      }
-      // Check if already subscribed
+      if (createErr) console.error("Newsletter table error:", createErr);
       db.query("SELECT id FROM newsletter_subscribers WHERE email = ?", [email], (checkErr, existing) => {
-        if (checkErr) return res.status(500).json({ success: false, message: "Server error" });
-        if (existing && existing.length > 0) {
-          return res.status(200).json({ success: false, message: "You are already subscribed!" });
-        }
+        if (checkErr) return res.status(500).json({ success: false, message: "Error checking subscription" });
+        if (existing && existing.length > 0) return res.status(400).json({ success: false, message: "Email already subscribed" });
+        
         db.query("INSERT INTO newsletter_subscribers (email) VALUES (?)", [email], (insertErr) => {
-          if (insertErr) return res.status(500).json({ success: false, message: "Subscription failed" });
-          res.status(201).json({ success: true, message: "Successfully subscribed to Inner Circle!" });
+          if (insertErr) return res.status(500).json({ success: false, message: "Error subscribing" });
+          res.json({ success: true, message: "Subscription successful!" });
         });
       });
     }
   );
 });
-
-// ─── Notifications API (recent orders + enquiries) ───────────────────────────
 app.get("/api/notifications", (req, res) => {
   const ordersSql = `
     SELECT id, customer_name, total_amount, status, created_at, 'order' as type
@@ -1772,7 +1819,6 @@ app.get("/api/notifications", (req, res) => {
 
   db.query(ordersSql, (ordErr, orders) => {
     if (ordErr) {
-      // orders table might not exist or differ
       orders = [];
     }
     db.query(enquiriesSql, (enqErr, enquiries) => {

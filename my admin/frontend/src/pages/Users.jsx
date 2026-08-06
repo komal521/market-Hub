@@ -2,12 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import addIcon from "../assets/add.png";
 import searchIcon from "../assets/search.png";
 import userIcon from "../assets/user.png";
-import a1 from "../assets/a1.jpeg";
-import a4 from "../assets/a4.jpeg";
-import b1 from "../assets/b1.jpeg";
-import b2 from "../assets/b2.jpeg";
-import b4 from "../assets/b4.jpeg";
-const profileImages = [a1, a4, b1, b2, b4];
 import pencilIcon from "../assets/pencil (1).png";
 import binIcon from "../assets/bin.png";
 import viewIcon from "../assets/view.png";
@@ -198,9 +192,9 @@ const Users = ({ darkMode, setActive, setEditData }) => {
               <div key={user.id}
                 className={`w-full grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_100px_100px_100px_120px] gap-x-2 rounded-2xl border px-4 py-3 shadow-sm md:items-center hover:shadow-md transition-all duration-200 ${darkMode ? "bg-gray-700 border-gray-600 hover:bg-gray-600" : "bg-[#fcfbf7] border-gray-100 hover:bg-white"}`}>
                 <img
-                  src={user.profileImage ? `http://localhost:5000/uploads/${user.profileImage}` : profileImages[index % profileImages.length]}
+                  src={user.profileImage ? `http://localhost:5000/uploads/${user.profileImage}` : userIcon}
                   alt={user.fullName}
-                  className="h-12 w-12 rounded-xl object-cover border-2 border-[#d6b08c]"
+                  className="h-12 w-12 rounded-xl object-cover border-2 border-gray-200 bg-gray-100 p-1"
                 />
                 <div className="min-w-0">
                   <h3 className={`font-bold truncate ${darkMode ? "text-white" : "text-[#1f2937]"}`}>{user.fullName}</h3>
@@ -225,7 +219,7 @@ const Users = ({ darkMode, setActive, setEditData }) => {
                    <button onClick={() => {
                         setEditData({
                           ...user,
-                          displayedImage: user.profileImage ? `http://localhost:5000/uploads/${user.profileImage}` : profileImages[index % profileImages.length]
+                          displayedImage: user.profileImage ? `http://localhost:5000/uploads/${user.profileImage}` : userIcon
                         });
                         setActive("Edit User");
                       }}
@@ -251,9 +245,9 @@ const Users = ({ darkMode, setActive, setEditData }) => {
             <h2 className="text-2xl font-bold mb-5 text-[#5c4033]">User Profile</h2>
             <div className="flex flex-col items-center mb-5">
               <img
-                src={viewUser.profileImage ? `http://localhost:5000/uploads/${viewUser.profileImage}` : a1}
+                src={viewUser.profileImage ? `http://localhost:5000/uploads/${viewUser.profileImage}` : userIcon}
                 alt=""
-                className="w-24 h-24 rounded-full object-cover border-4 border-[#d6b08c] shadow-md" />
+                className="w-24 h-24 rounded-full object-cover border-4 border-[#d6b08c] shadow-md bg-gray-100 p-2" />
               <h3 className={`text-lg font-bold mt-3 ${darkMode ? "text-white" : "text-[#1f2937]"}`}>{viewUser.fullName}</h3>
               <span className={`text-xs px-3 py-1 rounded-full font-semibold mt-1 ${
                 viewUser.status === "Active" ? "bg-[#c6eadf] text-[#138368]"
@@ -280,8 +274,7 @@ const Users = ({ darkMode, setActive, setEditData }) => {
             </div>
             <div className="mt-6 flex gap-3">
               <button onClick={() => {
-                  const idx = users.findIndex(u => u.id === viewUser.id);
-                  const displayedImg = viewUser.profileImage ? `http://localhost:5000/uploads/${viewUser.profileImage}` : profileImages[idx !== -1 ? idx % profileImages.length : 0];
+                  const displayedImg = viewUser.profileImage ? `http://localhost:5000/uploads/${viewUser.profileImage}` : userIcon;
                   setEditData({
                     ...viewUser,
                     displayedImage: displayedImg

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import phoneCall from "../assets/phone-call.png";
@@ -19,6 +19,24 @@ const Contact = () => {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [userInfo, setUserInfo] = useState({ phone: "", email: "", address: "", country: "India" });
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("user")) || {};
+    setUserInfo({
+      phone: stored.phone || "+91 98765 43210",
+      email: stored.email || "support@shop.com",
+      address: stored.address || "Jind, Haryana",
+      country: "India",
+    });
+    if (stored.fullName || stored.email) {
+      setFormData(prev => ({
+        ...prev,
+        name: stored.fullName || "",
+        email: stored.email || "",
+        phone: stored.phone || "",
+      }));
+    }
+  }, []);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: "" });
@@ -91,7 +109,7 @@ const Contact = () => {
               {
                 icon: phoneCall,
                 label: "Call Us",
-                value: "+91 98765 43210",
+                value: userInfo.phone,
                 sub: "Mon-Fri, 9am - 6pm",
                 color: "#7c3aed",
                 bg: "from-purple-50 to-purple-100 dark:from-purple-900/40 dark:to-purple-800/40",
@@ -99,7 +117,7 @@ const Contact = () => {
               {
                 icon: gmail,
                 label: "Email Us",
-                value: "support@shop.com",
+                value: userInfo.email,
                 sub: "24/7 Support Available",
                 color: "#d97706",
                 bg: "from-amber-50 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/40",
@@ -107,8 +125,8 @@ const Contact = () => {
               {
                 icon: location,
                 label: "Visit Our Store",
-                value: "Jind, Haryana",
-                sub: "India",
+                value: userInfo.address,
+                sub: userInfo.country,
                 color: "#059669",
                 bg: "from-emerald-50 to-emerald-100 dark:from-emerald-900/40 dark:to-emerald-800/40",
               },

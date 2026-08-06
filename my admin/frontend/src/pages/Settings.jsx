@@ -43,9 +43,15 @@ const detectBrowser = () => {
 };
 const detectDevice = () => {
   const ua = navigator.userAgent;
-  if (/Mobi|Android/i.test(ua)) return "Mobile Device";
-  if (/iPad|Tablet/i.test(ua)) return "Tablet";
-  return "Desktop / Laptop";
+  let os = "Unknown OS";
+  if (ua.includes("Win")) os = "Windows";
+  else if (ua.includes("Mac")) os = "MacOS";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("like Mac")) os = "iOS";
+  if (/Mobi|Android/i.test(ua)) return `Mobile (${os})`;
+  if (/iPad|Tablet/i.test(ua)) return `Tablet (${os})`;
+  return `Desktop (${os})`;
 };
 
 const Settings = ({ darkMode }) => {

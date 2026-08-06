@@ -176,9 +176,15 @@ const Reports = ({ darkMode }) => {
     doc.text("Revenue & Orders Full Report", 14, 18);
     doc.setFontSize(10);
     doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 26);
-    doc.text(`Total Revenue: ${stats[0]?.value || 'N/A'}   Total Orders: ${stats[1]?.value || 'N/A'}   Active Users: ${stats[2]?.value || 'N/A'}`, 14, 34);
+    doc.text(`Total Revenue: ${stats[0]?.value?.toString().replace(/₹/g, 'Rs. ') || 'N/A'}   Total Orders: ${stats[1]?.value || 'N/A'}   Active Users: ${stats[2]?.value || 'N/A'}`, 14, 34);
     const tableColumn = ["Report ID", "Client Name", "Revenue", "Status", "Date"];
-    const tableRows = recentReports.map(r => [r.id, r.client, r.revenue, r.status, r.date]);
+    const tableRows = recentReports.map(r => [
+      r.id, 
+      r.client, 
+      r.revenue ? r.revenue.toString().replace(/₹/g, 'Rs. ') : "", 
+      r.status, 
+      r.date
+    ]);
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
